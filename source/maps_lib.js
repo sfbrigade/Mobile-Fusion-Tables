@@ -52,26 +52,30 @@ var MapsLib = {
         return (row[columnName] || {"value" : defVal}).value;
     };
 
-    html = "<div class='infobox-container'>";
-    html += "<div class='infobox-left'>";
+    html = "";
+    //html = "<div class='infobox-container'>";
         // Score.
         html += "<div class='score " + getValue('last_score_category') + "'>";
         html += getValue('last_score','?');
         html += "</div>";
         // Business name. 
-        html += "<b>" + getValue('name') + "</b><br/>";
+        html += "<h3 class='ui-li-heading'>" + getValue('name') + "</h3>";
         // Last inspection date.
+        html += "<p class='ui-li-desc'><strong>";
         if (getValue('last_inspection_date') != '') {
-            html += "Inspected: " + getValue('last_inspection_date') + "<br/><br/>";
+            html += "Inspected " + getValue('last_inspection_date');
         } else {
-            html += "No inspection result<br/><br/>";
+            html += "No inspection result";
         }
+        html += "</strong></p>";
         // Address.
+        html += "<p class='ui-li-desc'>";
         if (getValue('address') != "") {
-            html += getValue('address') + "<br/><br/>";
+            html += getValue('address');
         }
-        // Violations if any.
-        if (getValue('violation_1') != "") {
+        if (!listView && getValue('violation_1') != "") {
+            // Violations if any (and not listview)
+            html +=  "<br/><br/>";
             html += "<b>Recent violations:</b><br/>";
             html += "- " + getValue('violation_1');
             if (getValue('violation_2') != "") {
@@ -81,15 +85,16 @@ var MapsLib = {
                 html += "<br/>- " + getValue('violation_3');
             }
         }
+        html += "</p>";
         
-    html += "</div>"; // End infobox-left
-    html += "<div class='infobox-right'>";
+    //html += "<div class='infobox-right'>";
         // Link to the detailed page.
-        html += "<a href='" + getValue('business_id') + ".html'>";
-        html += "<span class='moreinfo ui-icon ui-icon-arrow-r ui-icon-shadow'></span>";
-        html += "</a>";
-    html += "</div>"; // End infobox-right
-    html += "</div>"; // End infobox-container
+        //html += "<a href='" + getValue('business_id') + ".html'>";
+        //html += "<span class='moreinfo ui-icon ui-icon-arrow-r ui-icon-shadow'></span>";
+        //html += "</a>";
+    //html += "</div>"; // End infobox-right
+    
+    //html += "</div>"; // End infobox-container
 
     return html;
   },
@@ -355,23 +360,29 @@ var MapsLib = {
       var whereClause = MapsLib.locationColumn + " not equal to ''";
       // TODO1: Where clause is the nearest 20 elements to the window center
       //        with optoin to fetch more.
-      var orderClause = "ST_DISTANCE(latitude, LATLNG(" + MapsLib.map_centroid.lat() + "," + 
-                MapsLib.map_centroid.lng() + ")) LIMIT 10";
+      var orderClause = "ST_DISTANCE(latitude, LATLNG(" + map.getCenter().lat() + "," + 
+                map.getCenter().lng() + ")) LIMIT 10";
+      $("ul#listview").html('<li data-theme="c">Loading results...</li>');
       MapsLib.query("*", whereClause, orderClause, "MapsLib.displayListView");
   },
 
   displayListView: function(json) {
       MapsLib.handleError(json);
-      // TODO: Display a list of results...
+      // Empty the listview object.
+      $("ul#listview").html("");
+
       for (var ix=0; ix<json.rows.length; ix++){
           // make row object.
           var row = {};
           for (var jx=0; jx<json.columns.length; jx++) {
               row[ json.columns[jx] ] = {"value" : json.rows[ix][jx]};
           }
-          // get row object html.
-          var row_html = MapsLib.writeInfoWindow(row, true);
-          $("#list-view").append(row_html);
+
+          var row_html = '<li data-corners="false" data-shadow="false" data-iconshadow="true" data-wrapperels="div" data-icon="arrow-r" data-iconpos="right" data-theme="d" class="ui-btn ui-btn-icon-right ui-li-has-arrow ui-li ui-btn-up-d"><div class="ui-btn-inner ui-li"><div class="ui-btn-text"><a href="todo.html" class="ui-link-inherit">';
+          row_html += MapsLib.writeInfoWindow(row, true);
+          row_html += '</a></div><span class="ui-icon ui-icon-arrow-r ui-icon-shadow">&nbsp;</span></div></li>';
+
+          $("ul#listview").append(row_html);
       }
   },
 
