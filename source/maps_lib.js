@@ -370,7 +370,7 @@ var MapsLib = {
       //        with optoin to fetch more.
       var orderClause = "ST_DISTANCE(latitude, LATLNG(" + map.getCenter().lat() + "," + 
                 map.getCenter().lng() + ")) LIMIT 10";
-      $("ul#listview").html('<li data-theme="c">Loading results...</li>');
+      $("ul#listview").html('<li data-corners="false" data-shadow="false" data-iconshadow="true" data-theme="d">Loading results...</li>');
       MapsLib.query("*", whereClause, orderClause, "MapsLib.displayListView");
   },
 
