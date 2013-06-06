@@ -13,13 +13,22 @@ or via the bit.ly link: http://bit.ly/fusion-mobile
 
 Todo:
 -----
-1) Get the 'ListView' page view working, referencing this example: http://jquerymobile.com/demos/1.2.1/docs/lists/lists-formatting.html
+* Have a 'sample_data' directory containing.. 
+    * the fusion table .csv
+    * a template to generate the sample_data/business/ID.html pages
+    * a python file to run over the csv and regen the ID.html pages
+    * A comment on where the data came from!
 
-2) Scroll (or drag up) for more results in list view.
+* Why is it so slow to load? why does the map redraw break?
 
-3) Finish the about page
+* Drop a "you are here - blue dot when you geolocate."
 
-4) Write the search dialog to update the whereClause
+* Scroll (or drag up) for more results in list view.
 
-5) Write rock-solid docs so that others can clone this and host their own
-fusion tables.
+* Finish the about page
+
+* Write the search dialog to update the whereClause
+
+* Write rock-solid docs so that others can clone this and host their own
+fusion tables. Re-arrange the javascript so the 'custom' code goes in one
+place.
