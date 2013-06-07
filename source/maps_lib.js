@@ -176,7 +176,14 @@ var MapsLib = {
     var whereClause = MapsLib.locationColumn + " not equal to ''";
 
     //-----custom filters-------
-
+    // Custom filters for filtering by food score
+    var scoreRange = $("#score-filter").find(":selected").val()
+    var searchScore = " AND 'last_score'";
+    if (scoreRange == "1") { searchScore += ">90"}
+    if (scoreRange == "2") { searchScore += ">85 AND 'last_score' <= 90 " }
+    if (scoreRange == "3") { searchScore += ">70 AND 'last_score' <= 85 "}
+    if (scoreRange == "4") { searchScore += "<=70"}
+    if (scoreRange != "0") {whereClause += searchScore}
     //-------end of custom filters--------
 
     if (address != "" && address != undefined) {

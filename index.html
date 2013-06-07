@@ -185,7 +185,28 @@
     </div>
 
     <div data-role="content">
-      <h5>Todo..</h5>
+        <div data-role="fieldcontain">
+            <label for="score-filter">
+                Choose:
+            </label>
+            <select id="score-filter" name="">
+                <option value="0" selected="selected">
+                    Choose your filter
+                </option>
+                <option value="1">
+                                    Good
+                </option>
+                <option value="2">
+                    Adequate
+                </option>
+                <option value="3">
+                    Needs Improvement
+                </option>
+                <option value="4">
+                    Poor
+                </option>
+            </select>
+        </div>
     </div>
   </div><script type="text/javascript" src=
   "source/jquery.address.min.js">
@@ -196,9 +217,13 @@
   <script type="text/javascript">
   $(function() {
 
-        MapsLib.initialize();
-
+      MapsLib.initialize();
+      $('#score-filter').change(function(){
+        MapsLib.doSearch();
+        window.location = "#page-map";
     });
+
+  });
 
   </script><script type="text/javascript">
 (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
