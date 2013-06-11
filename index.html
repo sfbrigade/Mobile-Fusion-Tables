@@ -207,6 +207,18 @@
                     Poor
                 </option>
             </select>
+          <h4>Address:</h4>
+          <input class='input-block-level' id='search_address' placeholder='Enter an address or an intersection' type='text' />
+          <label>
+              within
+              <select class='input-small' id='search_radius'>
+              <option value='400'>2 blocks</option>
+              <option value='805'>1/2 mile</option>
+              <option value='1610'>1 mile</option>
+              <option value='3220'>2 miles</option>
+            </select>
+          </label>
+          <button class="btn" id="search">Search</button>
         </div>
     </div>
   </div><script type="text/javascript" src=
@@ -219,10 +231,15 @@
   $(function() {
 
       MapsLib.initialize();
+      $("#search_address").geocomplete();
       $('#score-filter').change(function(){
         MapsLib.doSearch();
         window.location = "#page-map";
     });
+      $("#search").click(function(){
+        MapsLib.doSearch();
+        window.location = "#page-map";
+      });
 
   });
 

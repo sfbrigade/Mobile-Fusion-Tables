@@ -194,8 +194,9 @@ var MapsLib = {
         if (status == google.maps.GeocoderStatus.OK) {
           MapsLib.currentPinpoint = results[0].geometry.location;
 
-          $.address.parameter('address', encodeURIComponent(address));
-          $.address.parameter('radius', encodeURIComponent(MapsLib.searchRadius));
+          // Below source code sets in query strings for the search; Temporarily commented this out as it causes page load error; The query string is used for parsing out search parameters, please see method "convertToPlainString"
+          // $.address.parameter('address', encodeURIComponent(address));
+          // $.address.parameter('radius', encodeURIComponent(MapsLib.searchRadius));
           map.setCenter(MapsLib.currentPinpoint);
           map.setZoom(14);
 
