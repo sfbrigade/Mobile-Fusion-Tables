@@ -176,7 +176,14 @@ var MapsLib = {
     var whereClause = MapsLib.locationColumn + " not equal to ''";
 
     //-----custom filters-------
-
+    // Custom filters for filtering by food score
+    var scoreRange = $("#score-filter").find(":selected").val()
+    var searchScore = " AND 'last_score'";
+    if (scoreRange == "1") { searchScore += ">90"}
+    if (scoreRange == "2") { searchScore += ">85 AND 'last_score' <= 90 " }
+    if (scoreRange == "3") { searchScore += ">70 AND 'last_score' <= 85 "}
+    if (scoreRange == "4") { searchScore += "<=70"}
+    if (scoreRange != "0") {whereClause += searchScore}
     //-------end of custom filters--------
 
     if (address != "" && address != undefined) {
@@ -187,8 +194,9 @@ var MapsLib = {
         if (status == google.maps.GeocoderStatus.OK) {
           MapsLib.currentPinpoint = results[0].geometry.location;
 
-          $.address.parameter('address', encodeURIComponent(address));
-          $.address.parameter('radius', encodeURIComponent(MapsLib.searchRadius));
+          // Below source code sets in query strings for the search; Temporarily commented this out as it causes page load error; The query string is used for parsing out search parameters, please see method "convertToPlainString"
+          // $.address.parameter('address', encodeURIComponent(address));
+          // $.address.parameter('radius', encodeURIComponent(MapsLib.searchRadius));
           map.setCenter(MapsLib.currentPinpoint);
           map.setZoom(14);
 
