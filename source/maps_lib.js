@@ -52,8 +52,7 @@ var MapsLib = {
         return (row[columnName] || {"value" : defVal}).value;
     };
 
-    html = "";
-    //html = "<div class='infobox-container'>";
+    html = "<div class='infobox-container'>";
         // Score.
         html += "<div class='score " + getValue('last_score_category') + "'>";
         html += getValue('last_score','?');
@@ -85,7 +84,7 @@ var MapsLib = {
                 html += "<br/>- " + getValue('violation_3');
             }
         }
-        html += "</p>";
+        html += "</p></div>";
         
     //html += "<div class='infobox-right'>";
         // Link to the detailed page.
@@ -359,7 +358,7 @@ var MapsLib = {
   getListView: function() {
       var whereClause = MapsLib.locationColumn + " not equal to ''";
       // TODO1: Where clause is the nearest 20 elements to the window center
-      //        with optoin to fetch more.
+      //        with option to fetch more.
       var orderClause = "ST_DISTANCE(latitude, LATLNG(" + map.getCenter().lat() + "," + 
                 map.getCenter().lng() + ")) LIMIT 10";
       $("ul#listview").html('<li data-corners="false" data-shadow="false" data-iconshadow="true" data-theme="d">Loading results...</li>');
@@ -378,7 +377,7 @@ var MapsLib = {
               row[ json.columns[jx] ] = {"value" : json.rows[ix][jx]};
           }
 
-          var row_html = '<li data-corners="false" data-shadow="false" data-iconshadow="true" data-wrapperels="div" data-icon="arrow-r" data-iconpos="right" data-theme="d" class="ui-btn ui-btn-icon-right ui-li-has-arrow ui-li ui-btn-up-d"><div class="ui-btn-inner ui-li"><div class="ui-btn-text"><a href="todo.html" class="ui-link-inherit">';
+          var row_html = '<li data-corners="false" data-shadow="false" data-iconshadow="true" data-wrapperels="div" data-icon="arrow-r" data-iconpos="right" data-theme="d" class="ui-btn ui-btn-icon-right ui-li-has-arrow ui-li ui-btn-up-d"><div class="ui-btn-inner ui-li"><div class="ui-btn-text"><a href="todo.html" data-transition="slidedown" class="ui-link-inherit">';
           row_html += MapsLib.writeInfoWindow(row, true);
           row_html += '</a></div><span class="ui-icon ui-icon-arrow-r ui-icon-shadow">&nbsp;</span></div></li>';
 
