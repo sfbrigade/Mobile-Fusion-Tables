@@ -32,18 +32,20 @@ var MapsLib = {
   //NOTE: if your location column name has spaces in it, surround it with single quotes
   locationColumn:     "latitude",
 
-  map_default_center: new google.maps.LatLng(37.75, -122.4), //center that your map defaults to
+  map_default_center: new google.maps.LatLng(37.77, -122.45), //center that your map defaults to
   locationScope:      "san francisco",      //geographical area appended to all address searches
   recordName:         "result",       //for showing number of results
   recordNamePlural:   "results",
 
   // the following radii are in meters.  1 mile = 1610 m
   searchRadius:       1610 * 0.5,     // 1/2 mile
-  maxRadius:          0,              // -1: always start at current location
+  maxRadius:          1610 * 5,       // -1: always start at current location
                                       //  0: always start at map_default_center
-                                      // >0: snap to map_default_center if we're more than maxRadius away
+                                      // >0: start at map_default_center if we're more than maxRadius away
+                                      //     sends alert with maxRadiusExceededMessage (unless it's empty) 
+  maxRadiusExceededMessage: "Your location is far away from San Francisco.  Defaulting to city limits.",
 
-  defaultZoom:        12,             //zoom level when map is loaded (bigger is more zoomed in)
+  defaultZoom:        11,             //zoom level when map is loaded (bigger is more zoomed in)
   nearbyZoom:         17,             //zoom level when using nearby location
   addrMarkerImage: 'http://derekeder.com/images/icons/blue-pushpin.png',
   currentPinpoint: null,
@@ -122,6 +124,8 @@ var MapsLib = {
       mapTypeControl: false,
       mapTypeId: google.maps.MapTypeId.ROADMAP
     };
+
+    $("#map_canvas").css("visibility","hidden");
     map = new google.maps.Map($("#map_canvas")[0],myOptions);
     
     updateCenter = function(userPosition) {
@@ -134,19 +138,21 @@ var MapsLib = {
         zoom = MapsLib.defaultZoom;
       }
       else
-      {
+      { 
         youarehere = new google.maps.LatLng(userPosition.coords.latitude, userPosition.coords.longitude);
-
         if (MapsLib.maxRadius > 0)
         {
-          // check our distance^2 from the default center
-          var distLat = userPosition.coords.latitude - MapsLib.map_default_center.lat();
-          var distLong = userPosition.coords.longitude - MapsLib.map_default_center.lng();
-          var distSquared = (distLat * distLat) + (distLong * distLong);
-          if (distSquared > (MapsLib.maxRadius * MapsLib.maxRadius))
+          // check our distance from the default center
+          var dist = google.maps.geometry.spherical.computeDistanceBetween(youarehere, MapsLib.map_default_center);
+          if (dist > MapsLib.maxRadius)
           {
             zoom = MapsLib.defaultZoom;
             youarehere = MapsLib.map_centroid; // ignore user position if we're outside maxRadius
+            if (MapsLib.maxRadiusExceededMessage && MapsLib.maxRadiusExceededMessage.length > 0)
+            {
+              $( "#maxRadiusExceededMessageText" ).text(MapsLib.maxRadiusExceededMessage);
+              $( "#popupDialog" ).popup( "open" );
+            }
           }
         }
       }
@@ -154,6 +160,7 @@ var MapsLib = {
       map.setCenter(youarehere);
       map.setZoom(zoom);
       MapsLib.map_centroid = youarehere;
+    $("#map_canvas").css("visibility","visible");
     }
 
     getlocation = function(){
@@ -165,6 +172,7 @@ var MapsLib = {
         return false;
     }
     getlocation();
+
     // Wire up event handler for nearby button.
     $("a#nearby").click(function(e) {
         //e.stopImmediatePropagation();
