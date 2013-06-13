@@ -25,6 +25,7 @@
   "source/jquery.mobile-1.2.0.min.js"
   type="text/javascript">
 </script><!-- User-generated css. Including infobox styles -->
+  <script type="text/javascript" src="source/jquery.geocomplete.min.js"></script>
 
   <style type="text/css">
             .infobox-container {
@@ -175,7 +176,40 @@
     </div>
 
     <div data-role="content">
-      <h5>Todo..</h5>
+        <div data-role="fieldcontain">
+            <label for="score-filter">
+                Choose:
+            </label>
+            <select id="score-filter" name="">
+                <option value="0" selected="selected">
+                    Choose your filter
+                </option>
+                <option value="1">
+                                    Good
+                </option>
+                <option value="2">
+                    Adequate
+                </option>
+                <option value="3">
+                    Needs Improvement
+                </option>
+                <option value="4">
+                    Poor
+                </option>
+            </select>
+          <h4>Address:</h4>
+          <input class='input-block-level' id='search_address' placeholder='Enter an address or an intersection' type='text' />
+          <label>
+              within
+              <select class='input-small' id='search_radius'>
+              <option value='400'>2 blocks</option>
+              <option value='805'>1/2 mile</option>
+              <option value='1610'>1 mile</option>
+              <option value='3220'>2 miles</option>
+            </select>
+          </label>
+          <button class="btn" id="search">Search</button>
+        </div>
     </div>
   </div>
 
@@ -193,10 +227,13 @@
 <!-- User-generated js -->
   <script type="text/javascript">
   $(function() {
-    
-        MapsLib.initialize();
-
+      MapsLib.initialize();
+      $("#search_address").geocomplete();
+      $('#score-filter').change(function(){
+        MapsLib.doSearch();
+        window.location = "#page-map"
     });
+  });
 
   </script>
 
