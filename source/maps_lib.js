@@ -14,11 +14,14 @@
 var MapsLib = MapsLib || {};
 var MapsLib = {
 
+  ////////////////////////////////
+  // BEGIN CUSTOM DATA AND CODE //
+  ////////////////////////////////
+
   //Setup section - put your Fusion Table details here
   //Using the v1 Fusion Tables API. See https://developers.google.com/fusiontables/docs/v1/migration_guide for more info
 
   //the encrypted Table ID of your Fusion Table (found under File => About)
-  //NOTE: numeric IDs will be depricated soon
   fusionTableId:      "1kjZeEXWdu2NmsWKFnMoqek4f0EV-dVIJjxMHg6w",
 
   //*New Fusion Tables Requirement* API key. found at https://code.google.com/apis/console/
@@ -27,38 +30,46 @@ var MapsLib = {
 
   //name of the location column in your Fusion Table.
   //NOTE: if your location column name has spaces in it, surround it with single quotes
-  //example: locationColumn:     "'my location'",
   locationColumn:     "latitude",
 
-  map_centroid:       new google.maps.LatLng(37.75, -122.4), //center that your map defaults to
+  map_default_center: new google.maps.LatLng(37.75, -122.4), //center that your map defaults to
   locationScope:      "san francisco",      //geographical area appended to all address searches
   recordName:         "result",       //for showing number of results
   recordNamePlural:   "results",
 
-  searchRadius:       805,            //in meters ~ 1/2 mile
+  // the following radii are in meters.  1 mile = 1610 m
+  searchRadius:       1610 * 0.5,     // 1/2 mile
+  maxRadius:          0,              // -1: always start at current location
+                                      //  0: always start at map_default_center
+                                      // >0: snap to map_default_center if we're more than maxRadius away
+
   defaultZoom:        12,             //zoom level when map is loaded (bigger is more zoomed in)
+  nearbyZoom:         17,             //zoom level when using nearby location
   addrMarkerImage: 'http://derekeder.com/images/icons/blue-pushpin.png',
   currentPinpoint: null,
 
-  // Complete control over infobox html for any element.
-  // Also used by the 'list' view.
-  writeInfoWindow: function(row, listView) {
-    // Default the list_view to false, assuming infobox is for the map pop-up.
-    if (typeof(listView)==='undefined') listView = false;
+  // Returns HTML text for infobox contents based on row data.
+  // Also used to populate cells in 'list' view.
 
-    // Helper function - in case column name is missing.
-    getValue = function(columnName, defVal) {
-        if (typeof(defVal)==='undefined') defVal='';
-        return (row[columnName] || {"value" : defVal}).value;
-    };
+  getInfoboxHTML: function(row, isListView) {
+        if (typeof(isListView)==='undefined') isListView = false;
 
-    html = "<div class='infobox-container'>";
+        // Helper function - allows for default value and missing columns.
+        getValue = function(columnName, defVal) {
+            if (typeof(defVal)==='undefined') defVal='';
+            return (row[columnName] || {"value" : defVal}).value;
+        };
+
+        html = "<div class='infobox-container'>";
+
         // Score.
         html += "<div class='score " + getValue('last_score_category') + "'>";
         html += getValue('last_score','?');
         html += "</div>";
+
         // Business name. 
         html += "<h3 class='ui-li-heading'>" + getValue('name') + "</h3>";
+
         // Last inspection date.
         html += "<p class='ui-li-desc'><strong>";
         if (getValue('last_inspection_date') != '') {
@@ -67,13 +78,15 @@ var MapsLib = {
             html += "No inspection result";
         }
         html += "</strong></p>";
+
         // Address.
         html += "<p class='ui-li-desc'>";
         if (getValue('address') != "") {
             html += getValue('address');
         }
-        if (!listView && getValue('violation_1') != "") {
-            // Violations if any (and not listview)
+
+        // Violations if any (and not listview)
+        if (!isListView && getValue('violation_1') != "") {
             html +=  "<br/><br/>";
             html += "<b>Recent violations:</b><br/>";
             html += "- " + getValue('violation_1');
@@ -84,22 +97,21 @@ var MapsLib = {
                 html += "<br/>- " + getValue('violation_3');
             }
         }
-        html += "</p></div>";
-        
-    //html += "<div class='infobox-right'>";
-        // Link to the detailed page.
-        //html += "<a href='" + getValue('business_id') + ".html'>";
-        //html += "<span class='moreinfo ui-icon ui-icon-arrow-r ui-icon-shadow'></span>";
-        //html += "</a>";
-    //html += "</div>"; // End infobox-right
-    
-    //html += "</div>"; // End infobox-container
+        html += "</p></div>"; // End infobox-container
 
-    return html;
+        return html;
   },
+
+  //////////////////////////////
+  // END CUSTOM DATA AND CODE //
+  //////////////////////////////
+
+  map_centroid:       null, // gets initialized below
 
   initialize: function() {
     $( "#result_count" ).html("");
+
+    MapsLib.map_centroid = MapsLib.map_default_center;
 
    geocoder = new google.maps.Geocoder();
     var myOptions = {
@@ -111,18 +123,42 @@ var MapsLib = {
       mapTypeId: google.maps.MapTypeId.ROADMAP
     };
     map = new google.maps.Map($("#map_canvas")[0],myOptions);
-     
-    centerOnUser = function(position) {
-        youarehere = new google.maps.LatLng(position.coords.latitude,
-                                            position.coords.longitude);
-        map.setCenter(youarehere);
-        MapsLib.map_centroid = youarehere;
-        map.setZoom(18);
+    
+    updateCenter = function(userPosition) {
+      var zoom = MapsLib.nearbyZoom;
+      var youarehere = MapsLib.map_centroid;
+
+      // don't follow user if maxRadius is 0
+      if (MapsLib.maxRadius == 0)
+      {
+        zoom = MapsLib.defaultZoom;
+      }
+      else
+      {
+        youarehere = new google.maps.LatLng(userPosition.coords.latitude, userPosition.coords.longitude);
+
+        if (MapsLib.maxRadius > 0)
+        {
+          // check our distance^2 from the default center
+          var distLat = userPosition.coords.latitude - MapsLib.map_default_center.lat();
+          var distLong = userPosition.coords.longitude - MapsLib.map_default_center.lng();
+          var distSquared = (distLat * distLat) + (distLong * distLong);
+          if (distSquared > (MapsLib.maxRadius * MapsLib.maxRadius))
+          {
+            zoom = MapsLib.defaultZoom;
+            youarehere = MapsLib.map_centroid; // ignore user position if we're outside maxRadius
+          }
+        }
+      }
+
+      map.setCenter(youarehere);
+      map.setZoom(zoom);
+      MapsLib.map_centroid = youarehere;
     }
 
     getlocation = function(){
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(centerOnUser);
+            navigator.geolocation.getCurrentPosition(updateCenter);
         } else {
             alert("Your device is not sharing it's location.");
         }
@@ -231,10 +267,11 @@ var MapsLib = {
     });
     google.maps.event.clearListeners(MapsLib.searchrecords, 'click');
     google.maps.event.addListener(MapsLib.searchrecords, 'click', function(e) {
-        // Custom infoWindowHtml.
         
-        // TODO: only if writeInfoWindow is a function.
-        e.infoWindowHtml = MapsLib.writeInfoWindow(e.row);
+        if (typeof(MapsLib.getInfoboxHTML != 'undefined'))
+        {
+          e.infoWindowHtml = MapsLib.getInfoboxHTML(e.row);
+        }
     });
     MapsLib.searchrecords.setMap(map);
     MapsLib.getCount(whereClause);
@@ -252,7 +289,6 @@ var MapsLib = {
   findMe: function() {
     // Try W3C Geolocation (Preferred)
     var foundLocation;
-
     if(navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(function(position) {
         foundLocation = new google.maps.LatLng(position.coords.latitude,position.coords.longitude);
@@ -378,7 +414,7 @@ var MapsLib = {
           }
 
           var row_html = '<li data-corners="false" data-shadow="false" data-iconshadow="true" data-wrapperels="div" data-icon="arrow-r" data-iconpos="right" data-theme="d" class="ui-btn ui-btn-icon-right ui-li-has-arrow ui-li ui-btn-up-d"><div class="ui-btn-inner ui-li"><div class="ui-btn-text"><a href="todo.html" data-transition="slidedown" class="ui-link-inherit">';
-          row_html += MapsLib.writeInfoWindow(row, true);
+          row_html += MapsLib.getInfoboxHTML(row, true);
           row_html += '</a></div><span class="ui-icon ui-icon-arrow-r ui-icon-shadow">&nbsp;</span></div></li>';
 
           $("ul#listview").append(row_html);
