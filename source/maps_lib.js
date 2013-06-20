@@ -62,7 +62,7 @@ var MapsLib = {
             return (row[columnName] || {"value" : defVal}).value;
         };
 
-        html = "<div class='infobox-container'>";
+        html = isListView ? "<div class='infobox-container-list'>" : "<div class='infobox-container'>";
 
         // Score.
         html += "<div class='score " + getValue('last_score_category') + "'>";
@@ -70,10 +70,12 @@ var MapsLib = {
         html += "</div>";
 
         // Business name. 
-        html += "<h3 class='ui-li-heading'>" + getValue('name') + "</h3>";
+        var headerClass = isListView ? "ui-li-heading" : "infobox-header";
+        html += "<h3 class='" + headerClass + "'>" + getValue('name') + "</h3>";
 
         // Last inspection date.
-        html += "<p class='ui-li-desc'><strong>";
+        var dateClass = isListView ? "ui-li-desc" : "ui-li-desc infobox-subheader";
+        html += "<p class='" + dateClass + "'><strong>";
         if (getValue('last_inspection_date') != '') {
             html += "Inspected " + getValue('last_inspection_date');
         } else {
