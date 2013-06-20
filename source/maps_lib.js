@@ -127,7 +127,8 @@ var MapsLib = {
       mapTypeId: google.maps.MapTypeId.ROADMAP
     };
 
-    $("#map_canvas").css("visibility","hidden");
+    // hide map until we get current location (to avoid snapping)
+    $("#map_canvas").css("visibility","hidden"); 
     map = new google.maps.Map($("#map_canvas")[0],myOptions);
     
     updateCenter = function(userPosition) {
@@ -162,18 +163,27 @@ var MapsLib = {
       map.setCenter(youarehere);
       map.setZoom(zoom);
       MapsLib.map_centroid = youarehere;
-    $("#map_canvas").css("visibility","visible");
     }
+
+    function locationError(err) {
+      // TODO: this alert messes up the pin display on Android emulator.
+      //   If this is not a problem on an actual Android, uncomment alert.
+      //alert("Timed out getting current position.");
+    };
 
     getlocation = function(){
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(updateCenter);
+          var options = {
+            timeout: 5000
+          };
+          navigator.geolocation.getCurrentPosition(updateCenter, locationError, options);
         } else {
-            alert("Your device is not sharing it's location.");
+          alert("Your device is not sharing its location.");
         }
         return false;
     }
     getlocation();
+    $("#map_canvas").css("visibility","visible"); 
 
     // Wire up event handler for nearby button.
     $("a#nearby").click(function(e) {
@@ -447,7 +457,7 @@ var MapsLib = {
   //converts a slug or query string in to readable text
   convertToPlainString: function(text) {
     if (text == undefined) return '';
-  	return decodeURIComponent(text);
+    return decodeURIComponent(text);
   }
   
   //-----custom functions-------
