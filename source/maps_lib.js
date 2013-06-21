@@ -192,8 +192,10 @@ var MapsLib = {
 
       geocoder.geocode( { 'address': address}, function(results, status) {
         if (status == google.maps.GeocoderStatus.OK) {
+
           MapsLib.currentPinpoint = results[0].geometry.location;
 
+          // -------- issues -------
           // Below source code sets in query strings for the search; Temporarily commented this out as it causes page load error; The query string is used for parsing out search parameters, please see method "convertToPlainString"
           // $.address.parameter('address', encodeURIComponent(address));
           // $.address.parameter('radius', encodeURIComponent(MapsLib.searchRadius));
@@ -208,7 +210,8 @@ var MapsLib = {
             title:address
           });
 
-          whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadius + "))";
+          // Map now refocuses instead of filtering by search location
+          // whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadius + "))";
 
           MapsLib.drawSearchRadiusCircle(MapsLib.currentPinpoint);
           MapsLib.submitSearch(whereClause, map, MapsLib.currentPinpoint);
