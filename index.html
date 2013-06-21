@@ -257,10 +257,14 @@
     });
   });
 
-  </script>
+      $("#search").click(function(){
+        MapsLib.doSearch();
+        window.location = "#page-map";
+      });
 
-
-<script type="text/javascript">
+      $("a#nearby").click(function(){
+        MapsLib.findMe();
+      });
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-39859509-1']);

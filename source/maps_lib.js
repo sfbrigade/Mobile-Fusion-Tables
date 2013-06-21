@@ -1,5 +1,5 @@
 /*!
- * Mobile version of Derek Eder's searchable map template 
+ * Mobile version of Derek Eder's searchable map template
  * with Google Fusion Tables
  * http://derekeder.com/searchable_map_template/
  *
@@ -102,7 +102,6 @@ var MapsLib = {
             }
         }
         html += "</p></div>"; // End infobox-container
-
         return html;
   },
 
@@ -214,7 +213,7 @@ var MapsLib = {
     );
 
     $("a#listview").click(MapsLib.getListView);
- 
+
     // maintains map centerpoint for responsive design
     google.maps.event.addDomListener(map, 'idle', function() {
         MapsLib.calculateCenter();
@@ -233,9 +232,9 @@ var MapsLib = {
     else $("#search_radius").val(MapsLib.searchRadius);
     $(":checkbox").attr("checked", "checked");
     $("#result_count").hide();
-    
+
     //-----custom initializers-------
-    
+
     //-----end of custom initializers-------
 
     //run the default search
@@ -266,8 +265,10 @@ var MapsLib = {
 
       geocoder.geocode( { 'address': address}, function(results, status) {
         if (status == google.maps.GeocoderStatus.OK) {
+
           MapsLib.currentPinpoint = results[0].geometry.location;
 
+          // -------- issues -------
           // Below source code sets in query strings for the search; Temporarily commented this out as it causes page load error; The query string is used for parsing out search parameters, please see method "convertToPlainString"
           // $.address.parameter('address', encodeURIComponent(address));
           // $.address.parameter('radius', encodeURIComponent(MapsLib.searchRadius));
@@ -282,7 +283,8 @@ var MapsLib = {
             title:address
           });
 
-          whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadius + "))";
+          // Map now refocuses instead of filtering by search location
+          // whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadius + "))";
 
           MapsLib.drawSearchRadiusCircle(MapsLib.currentPinpoint);
           MapsLib.submitSearch(whereClause, map, MapsLib.currentPinpoint);
@@ -314,7 +316,6 @@ var MapsLib = {
     });
     google.maps.event.clearListeners(MapsLib.searchrecords, 'click');
     google.maps.event.addListener(MapsLib.searchrecords, 'click', function(e) {
-        
         if (typeof(MapsLib.getInfoboxHTML != 'undefined'))
         {
           e.infoWindowHtml = MapsLib.getInfoboxHTML(e.row);
@@ -341,6 +342,7 @@ var MapsLib = {
         foundLocation = new google.maps.LatLng(position.coords.latitude,position.coords.longitude);
         MapsLib.addrFromLatLng(foundLocation);
       }, null);
+
     }
     else {
       alert("Sorry, we could not find your location.");
@@ -387,7 +389,7 @@ var MapsLib = {
     if (orderClause) {
         queryStr.push(" ORDER BY " + orderClause);
     }
-    
+
     var sql = encodeURIComponent(queryStr.join(" "));
     var qstr = "https://www.googleapis.com/fusiontables/v1/query?sql="+sql+"&callback="+callback+"&key="+MapsLib.googleApiKey;
     console.log("Query: " + qstr);
@@ -495,10 +497,10 @@ var MapsLib = {
     if (text == undefined) return '';
     return decodeURIComponent(text);
   }
-  
+
   //-----custom functions-------
   // NOTE: if you add custom functions, make sure to append each one with a comma, except for the last one.
   // This also applies to the convertToPlainString function above
-  
+
   //-----end of custom functions-------
 }
