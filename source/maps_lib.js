@@ -111,6 +111,8 @@ var MapsLib = {
   //////////////////////////////
 
   map_centroid:       null, // gets initialized below
+  num_list_rows:      0, 
+  in_query:           false, 
 
   initialize: function() {
     $( "#result_count" ).html("");
@@ -131,6 +133,23 @@ var MapsLib = {
     $("#map_canvas").css("visibility","hidden"); 
     map = new google.maps.Map($("#map_canvas")[0],myOptions);
     
+    // add to list view when user scrolls to the bottom
+    $(window).scroll(function() {
+       if (MapsLib.num_list_rows == 0) return;
+
+       var listHeight = $("#page-list").height();
+       if (MapsLib.num_list_rows == 10)
+       {
+          // HACK: the page-list height isn't properly updated the first time, so
+          // hard-code 10 * max-height of cell
+          listHeight = 800;
+       }
+       //console.log($(window).scrollTop(), $(window).height(), listHeight );
+       if(!MapsLib.in_query && $(window).scrollTop() + $(window).height() >= listHeight - 100) {
+           MapsLib.updateListView();
+       }
+    });
+
     updateCenter = function(userPosition) {
       var zoom = MapsLib.nearbyZoom;
       var youarehere = MapsLib.map_centroid;
@@ -420,21 +439,37 @@ var MapsLib = {
   },
 
   getListView: function() {
+      MapsLib.num_list_rows = 0;
+      MapsLib.updateListView();
+  },
+
+  updateListView: function() {
       var whereClause = MapsLib.locationColumn + " not equal to ''";
-      // TODO1: Where clause is the nearest 20 elements to the window center
-      //        with option to fetch more.
+      // HACK: all we really want is the 10 rows that come after the existing MapsLib.num_list_rows.
+      //  but now we're querying all the rows up to it.  Is there a way to just get rows x to x+10? 
       var orderClause = "ST_DISTANCE(latitude, LATLNG(" + map.getCenter().lat() + "," + 
-                map.getCenter().lng() + ")) LIMIT 10";
-      $("ul#listview").html('<li data-corners="false" data-shadow="false" data-iconshadow="true" data-theme="d">Loading results...</li>');
+                map.getCenter().lng() + ")) LIMIT " + (MapsLib.num_list_rows + 10);
+      if (MapsLib.num_list_rows == 0)
+      {
+        $("ul#listview").html('<li data-corners="false" data-shadow="false" data-iconshadow="true" data-theme="d">Loading results...</li>');
+      }
+      MapsLib.in_query = true;
       MapsLib.query("*", whereClause, orderClause, "MapsLib.displayListView");
   },
 
   displayListView: function(json) {
+      MapsLib.in_query = false;
       MapsLib.handleError(json);
       // Empty the listview object.
-      $("ul#listview").html("");
+      var existingRows = MapsLib.num_list_rows;
+      if (existingRows == 0)
+      {
+        $("ul#listview").html("");
+      }
 
-      for (var ix=0; ix<json.rows.length; ix++){
+      var numRows = json.rows.length;
+      // we already have the first existingRows, we're just appending the remainder
+      for (var ix=existingRows; ix<numRows; ix++){
           // make row object.
           var row = {};
           for (var jx=0; jx<json.columns.length; jx++) {
@@ -447,6 +482,7 @@ var MapsLib = {
 
           $("ul#listview").append(row_html);
       }
+      MapsLib.num_list_rows += numRows;
   },
 
   // maintains map centerpoint for responsive design
