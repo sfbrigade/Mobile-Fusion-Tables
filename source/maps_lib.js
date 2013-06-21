@@ -1,5 +1,5 @@
 /*!
- * Mobile version of Derek Eder's searchable map template 
+ * Mobile version of Derek Eder's searchable map template
  * with Google Fusion Tables
  * http://derekeder.com/searchable_map_template/
  *
@@ -58,7 +58,7 @@ var MapsLib = {
         html += "<div class='score " + getValue('last_score_category') + "'>";
         html += getValue('last_score','?');
         html += "</div>";
-        // Business name. 
+        // Business name.
         html += "<h3 class='ui-li-heading'>" + getValue('name') + "</h3>";
         // Last inspection date.
         html += "<p class='ui-li-desc'><strong>";
@@ -86,14 +86,14 @@ var MapsLib = {
             }
         }
         html += "</p>";
-        
+
     //html += "<div class='infobox-right'>";
         // Link to the detailed page.
         //html += "<a href='" + getValue('business_id') + ".html'>";
         //html += "<span class='moreinfo ui-icon ui-icon-arrow-r ui-icon-shadow'></span>";
         //html += "</a>";
     //html += "</div>"; // End infobox-right
-    
+
     //html += "</div>"; // End infobox-container
 
     return html;
@@ -112,7 +112,7 @@ var MapsLib = {
       mapTypeId: google.maps.MapTypeId.ROADMAP
     };
     map = new google.maps.Map($("#map_canvas")[0],myOptions);
-     
+
     centerOnUser = function(position) {
         youarehere = new google.maps.LatLng(position.coords.latitude,
                                             position.coords.longitude);
@@ -140,7 +140,7 @@ var MapsLib = {
     );
 
     $("a#listview").click(MapsLib.getListView);
- 
+
     // maintains map centerpoint for responsive design
     google.maps.event.addDomListener(map, 'idle', function() {
         MapsLib.calculateCenter();
@@ -159,9 +159,9 @@ var MapsLib = {
     else $("#search_radius").val(MapsLib.searchRadius);
     $(":checkbox").attr("checked", "checked");
     $("#result_count").hide();
-    
+
     //-----custom initializers-------
-    
+
     //-----end of custom initializers-------
 
     //run the default search
@@ -244,7 +244,7 @@ var MapsLib = {
     google.maps.event.clearListeners(MapsLib.searchrecords, 'click');
     google.maps.event.addListener(MapsLib.searchrecords, 'click', function(e) {
         // Custom infoWindowHtml.
-        
+
         // TODO: only if writeInfoWindow is a function.
         e.infoWindowHtml = MapsLib.writeInfoWindow(e.row);
     });
@@ -270,6 +270,7 @@ var MapsLib = {
         foundLocation = new google.maps.LatLng(position.coords.latitude,position.coords.longitude);
         MapsLib.addrFromLatLng(foundLocation);
       }, null);
+
     }
     else {
       alert("Sorry, we could not find your location.");
@@ -316,7 +317,7 @@ var MapsLib = {
     if (orderClause) {
         queryStr.push(" ORDER BY " + orderClause);
     }
-    
+
     var sql = encodeURIComponent(queryStr.join(" "));
     var qstr = "https://www.googleapis.com/fusiontables/v1/query?sql="+sql+"&callback="+callback+"&key="+MapsLib.googleApiKey;
     console.log("Query: " + qstr);
@@ -371,7 +372,7 @@ var MapsLib = {
       var whereClause = MapsLib.locationColumn + " not equal to ''";
       // TODO1: Where clause is the nearest 20 elements to the window center
       //        with optoin to fetch more.
-      var orderClause = "ST_DISTANCE(latitude, LATLNG(" + map.getCenter().lat() + "," + 
+      var orderClause = "ST_DISTANCE(latitude, LATLNG(" + map.getCenter().lat() + "," +
                 map.getCenter().lng() + ")) LIMIT 10";
       $("ul#listview").html('<li data-corners="false" data-shadow="false" data-iconshadow="true" data-theme="d">Loading results...</li>');
       MapsLib.query("*", whereClause, orderClause, "MapsLib.displayListView");
@@ -407,10 +408,10 @@ var MapsLib = {
     if (text == undefined) return '';
   	return decodeURIComponent(text);
   }
-  
+
   //-----custom functions-------
   // NOTE: if you add custom functions, make sure to append each one with a comma, except for the last one.
   // This also applies to the convertToPlainString function above
-  
+
   //-----end of custom functions-------
 }

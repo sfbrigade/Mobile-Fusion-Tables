@@ -168,7 +168,7 @@
                     <h3 class="ui-li-heading">Amazon.com</h3>
                         <p class="ui-li-desc"><strong>4-for-3 Books for Kids</strong></p>
                         <p class="ui-li-desc">As someone who has purchased children's books from our 4-for-3 Store, you may be interested in these featured books.</p>
-                                
+
                         </a>
     </div><span class="ui-icon ui-icon-arrow-r ui-icon-shadow">&nbsp;</span></div></li>
 -->
@@ -236,9 +236,14 @@
         MapsLib.doSearch();
         window.location = "#page-map";
     });
+
       $("#search").click(function(){
         MapsLib.doSearch();
         window.location = "#page-map";
+      });
+
+      $("a#nearby").click(function(){
+        MapsLib.findMe();
       });
 
   });
