@@ -21,6 +21,9 @@ var MapsLib = {
   //Setup section - put your Fusion Table details here
   //Using the v1 Fusion Tables API. See https://developers.google.com/fusiontables/docs/v1/migration_guide for more info
 
+  // top title (including title of website)
+  title: "Inspection Data",
+
   //the encrypted Table ID of your Fusion Table (found under File => About)
   fusionTableId:      "1kjZeEXWdu2NmsWKFnMoqek4f0EV-dVIJjxMHg6w",
 
@@ -114,6 +117,9 @@ var MapsLib = {
   in_query:           false, 
 
   initialize: function() {
+    document.title = MapsLib.title;
+    $("#titlebar").text(MapsLib.title);
+
     $( "#result_count" ).html("");
 
     MapsLib.map_centroid = MapsLib.map_default_center;
