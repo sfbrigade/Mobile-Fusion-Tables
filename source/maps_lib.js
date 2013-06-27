@@ -18,11 +18,14 @@ var MapsLib = {
   // BEGIN CUSTOM DATA AND CODE //
   ////////////////////////////////
 
-  //Setup section - put your Fusion Table details here
-  //Using the v1 Fusion Tables API. See https://developers.google.com/fusiontables/docs/v1/migration_guide for more info
-
   // top title (including title of website)
   title: "Inspection Data",
+
+  //center that your map defaults to
+  map_default_center: new google.maps.LatLng(37.77, -122.45), 
+
+  //-- BEGIN Fusion Table details (using v1 Fusion Tables API) --//
+  //See https://developers.google.com/fusiontables/docs/v1/migration_guide for more info
 
   //the encrypted Table ID of your Fusion Table (found under File => About)
   fusionTableId:      "1kjZeEXWdu2NmsWKFnMoqek4f0EV-dVIJjxMHg6w",
@@ -35,13 +38,21 @@ var MapsLib = {
   //NOTE: if your location column name has spaces in it, surround it with single quotes
   locationColumn:     "latitude",
 
-  map_default_center: new google.maps.LatLng(37.77, -122.45), //center that your map defaults to
+  //-- END Fusion Table details --//
+
+
+  //-- BEGIN Search customizations --//
   locationScope:      "san francisco",      //geographical area appended to all address searches
   recordName:         "result",       //for showing number of results
   recordNamePlural:   "results",
 
   // the following radii are in meters.  1 mile = 1610 m
   searchRadius:       1610 * 0.5,     // 1/2 mile
+
+  //-- END Search customizations --//
+
+
+  //-- BEGIN Launch/Zoom behavior --//
   maxRadius:          1610 * 5,       // -1: always start at current location
                                       //  0: always start at map_default_center
                                       // >0: start at map_default_center if we're more than maxRadius away
@@ -50,12 +61,11 @@ var MapsLib = {
 
   defaultZoom:        11,             //zoom level when map is loaded (bigger is more zoomed in)
   nearbyZoom:         17,             //zoom level when using nearby location
-  addrMarkerImage: 'http://derekeder.com/images/icons/blue-pushpin.png',
-  currentPinpoint: null,
+
+  //-- END Launch/Zoom behavior --//
 
   // Returns HTML text for infobox contents based on row data.
   // Also used to populate cells in 'list' view.
-
   getInfoboxHTML: function(row, isListView) {
         if (typeof(isListView)==='undefined') isListView = false;
 
@@ -112,9 +122,13 @@ var MapsLib = {
   // END CUSTOM DATA AND CODE //
   //////////////////////////////
 
+
+
   map_centroid:       null, // gets initialized below
   num_list_rows:      0, 
   in_query:           false, 
+  addrMarkerImage: 'http://derekeder.com/images/icons/blue-pushpin.png',
+  currentPinpoint: null,
 
   initialize: function() {
     document.title = MapsLib.title;
@@ -156,25 +170,24 @@ var MapsLib = {
     });
 
     updateCenter = function(userPosition) {
-      var zoom = MapsLib.nearbyZoom;
-      var youarehere = MapsLib.map_centroid;
+      var nearbyPosition = null;
+      var useNearbyPosition = true;
 
       // don't follow user if maxRadius is 0
       if (MapsLib.maxRadius == 0)
       {
-        zoom = MapsLib.defaultZoom;
+        useNearbyPosition = false;
       }
       else
       { 
-        youarehere = new google.maps.LatLng(userPosition.coords.latitude, userPosition.coords.longitude);
+        nearbyPosition = new google.maps.LatLng(userPosition.coords.latitude, userPosition.coords.longitude);
         if (MapsLib.maxRadius > 0)
         {
           // check our distance from the default center
-          var dist = google.maps.geometry.spherical.computeDistanceBetween(youarehere, MapsLib.map_default_center);
+          var dist = google.maps.geometry.spherical.computeDistanceBetween(nearbyPosition, MapsLib.map_default_center);
           if (dist > MapsLib.maxRadius)
           {
-            zoom = MapsLib.defaultZoom;
-            youarehere = MapsLib.map_centroid; // ignore user position if we're outside maxRadius
+            useNearbyPosition = false;
             if (MapsLib.maxRadiusExceededMessage && MapsLib.maxRadiusExceededMessage.length > 0)
             {
               $( "#maxRadiusExceededMessageText" ).text(MapsLib.maxRadiusExceededMessage);
@@ -184,9 +197,9 @@ var MapsLib = {
         }
       }
 
-      map.setCenter(youarehere);
-      map.setZoom(zoom);
-      MapsLib.map_centroid = youarehere;
+      map.setCenter(useNearbyPosition ? nearbyPosition : MapsLib.map_default_center);
+      map.setZoom(useNearbyPosition ? MapsLib.nearbyZoom : MapsLib.defaultZoom);
+      MapsLib.map_centroid = useNearbyPosition ? nearbyPosition : MapsLib.map_default_center;
     }
 
     function locationError(err) {

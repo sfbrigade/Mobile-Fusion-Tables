@@ -251,20 +251,11 @@
   $(function() {
       MapsLib.initialize();
       $("#search_address").geocomplete();
-      $('#score-filter').change(function(){
-        MapsLib.doSearch();
-        window.location = "#page-map";
-    });
-  });
-
       $("#search").click(function(){
         MapsLib.doSearch();
         window.location = "#page-map";
       });
-
-      $("a#nearby").click(function(){
-        MapsLib.findMe();
-      });
+  });
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-39859509-1']);
