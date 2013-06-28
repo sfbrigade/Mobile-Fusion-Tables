@@ -130,7 +130,7 @@ var MapsLib = {
   addrMarkerImage:    'http://derekeder.com/images/icons/blue-pushpin.png',
   blueDotImage:       'http://maps.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png',
   currentPinpoint:    null,
-  localInfoWindow:    new google.maps.InfoWindow({}),
+  infoWindow:         new google.maps.InfoWindow({}),
 
   initialize: function() {
     document.title = MapsLib.title;
@@ -197,7 +197,6 @@ var MapsLib = {
           }
         }
       }
-
       map.setCenter(useNearbyPosition ? nearbyPosition : MapsLib.map_default_center);
       map.setZoom(useNearbyPosition ? MapsLib.nearbyZoom : MapsLib.defaultZoom);
       MapsLib.map_centroid = useNearbyPosition ? nearbyPosition : MapsLib.map_default_center;
@@ -215,8 +214,8 @@ var MapsLib = {
           title:"You are here."
         });
         google.maps.event.addListener(MapsLib.localMarker, 'click', function() {
-            MapsLib.localInfoWindow.setContent('<div id="infobox-container">You are here.</div>');
-            MapsLib.localInfoWindow.open(map, this);
+            MapsLib.infoWindow.setContent('<div id="infobox-container">You are here.</div>');
+            MapsLib.infoWindow.open(map, this);
         }); 
       }
     }
@@ -350,13 +349,19 @@ var MapsLib = {
         where:  whereClause
       },
       styleId: 2,
-      templateId: 3
+      templateId: 3,
+      suppressInfoWindows: true
     });
     google.maps.event.clearListeners(MapsLib.searchrecords, 'click');
     google.maps.event.addListener(MapsLib.searchrecords, 'click', function(e) {
         if (typeof(MapsLib.getInfoboxHTML != 'undefined'))
         {
-          e.infoWindowHtml = MapsLib.getInfoboxHTML(e.row);
+            MapsLib.infoWindow.setOptions({
+              content: MapsLib.getInfoboxHTML(e.row),
+              position: e.latLng,
+              pixelOffset: e.pixelOffset
+            });
+            MapsLib.infoWindow.open(map);
         }
     });
     MapsLib.searchrecords.setMap(map);
@@ -370,6 +375,7 @@ var MapsLib = {
       MapsLib.addrMarker.setMap(null);
     if (MapsLib.searchRadiusCircle != null)
       MapsLib.searchRadiusCircle.setMap(null);
+    MapsLib.infoWindow.close();
   },
 
   findMe: function() {
