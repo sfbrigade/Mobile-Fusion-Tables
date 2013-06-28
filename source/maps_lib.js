@@ -127,8 +127,10 @@ var MapsLib = {
   map_centroid:       null, // gets initialized below
   num_list_rows:      0, 
   in_query:           false, 
-  addrMarkerImage: 'http://derekeder.com/images/icons/blue-pushpin.png',
-  currentPinpoint: null,
+  addrMarkerImage:    'http://derekeder.com/images/icons/blue-pushpin.png',
+  blueDotImage:       'http://maps.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png',
+  currentPinpoint:    null,
+  localInfoWindow:    new google.maps.InfoWindow({}),
 
   initialize: function() {
     document.title = MapsLib.title;
@@ -199,6 +201,24 @@ var MapsLib = {
       map.setCenter(useNearbyPosition ? nearbyPosition : MapsLib.map_default_center);
       map.setZoom(useNearbyPosition ? MapsLib.nearbyZoom : MapsLib.defaultZoom);
       MapsLib.map_centroid = useNearbyPosition ? nearbyPosition : MapsLib.map_default_center;
+      if (useNearbyPosition)
+      {
+        if (MapsLib.localMarker != null)
+        {
+          MapsLib.localMarker.setMap(null);
+        }
+        MapsLib.localMarker = new google.maps.Marker({
+          position: nearbyPosition,
+          map: map,
+          icon: MapsLib.blueDotImage,
+          animation: google.maps.Animation.DROP,
+          title:"You are here."
+        });
+        google.maps.event.addListener(MapsLib.localMarker, 'click', function() {
+            MapsLib.localInfoWindow.setContent('<div id="infobox-container">You are here.</div>');
+            MapsLib.localInfoWindow.open(map, this);
+        }); 
+      }
     }
 
     function locationError(err) {
