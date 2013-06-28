@@ -23,11 +23,7 @@ Todo:
 
 * Drop a "you are here - blue dot when you geolocate."
 
-* Scroll (or drag up) for more results in list view.
-
 * Finish the about page
-
-* Write the search dialog to update the whereClause
 
 * Write rock-solid docs so that others can clone this and host their own
 fusion tables. Re-arrange the javascript so the 'custom' code goes in one

@@ -135,7 +135,6 @@ var MapsLib = {
     $("#titlebar").text(MapsLib.title);
 
     $( "#result_count" ).html("");
-
     MapsLib.map_centroid = MapsLib.map_default_center;
 
    geocoder = new google.maps.Geocoder();
@@ -508,7 +507,7 @@ var MapsLib = {
 
   // maintains map centerpoint for responsive design
   calculateCenter: function() {
-    center = map.getCenter();
+    MapsLib.map_centroid = map.getCenter();
   },
 
   //converts a slug or query string in to readable text
