@@ -300,17 +300,32 @@ var MapsLib = {
       if (address.toLowerCase().indexOf(MapsLib.locationScope) == -1)
         address = address + " " + MapsLib.locationScope;
 
-      geocoder.geocode( { 'address': address}, function(results, status) {
+        geocoder.geocode( { 'address': address}, function(results, status) {
         if (status == google.maps.GeocoderStatus.OK) {
-
           MapsLib.currentPinpoint = results[0].geometry.location;
 
           // -------- issues -------
           // Below source code sets in query strings for the search; Temporarily commented this out as it causes page load error; The query string is used for parsing out search parameters, please see method "convertToPlainString"
           // $.address.parameter('address', encodeURIComponent(address));
           // $.address.parameter('radius', encodeURIComponent(MapsLib.searchRadius));
-          map.setCenter(MapsLib.currentPinpoint);
-          map.setZoom(14);
+
+          // HACK: mobile device puts pinpoint at upper-left corner when we zoom or adjust bounds,
+          // so we offset it manually.
+          var offset = MapsLib.searchRadius / 20000000; // quick and dirty estimate
+          var NW_point = new google.maps.LatLng(MapsLib.currentPinpoint.jb + offset*$(document).height()*.75, MapsLib.currentPinpoint.kb - offset*$(document).width()*1.1);
+          
+          map.setCenter(NW_point);
+          MapsLib.map_centroid = NW_point;
+
+          // using bounds instead of zoom to fit search radius in map
+          var bounds = new google.maps.LatLngBounds();
+          var radius_est = 3.0 * MapsLib.searchRadius / 100000000; // quick and dirty estimate, not quite lat/lng coordinates
+          bounds.extend(new google.maps.LatLng(MapsLib.currentPinpoint.jb - radius_est, MapsLib.currentPinpoint.kb));
+          bounds.extend(new google.maps.LatLng(MapsLib.currentPinpoint.jb + radius_est, MapsLib.currentPinpoint.kb));
+          bounds.extend(new google.maps.LatLng(MapsLib.currentPinpoint.jb, MapsLib.currentPinpoint.kb - radius_est));
+          bounds.extend(new google.maps.LatLng(MapsLib.currentPinpoint.jb, MapsLib.currentPinpoint.kb + radius_est));
+
+          map.fitBounds(bounds); 
 
           MapsLib.addrMarker = new google.maps.Marker({
             position: MapsLib.currentPinpoint,
@@ -356,6 +371,9 @@ var MapsLib = {
     google.maps.event.addListener(MapsLib.searchrecords, 'click', function(e) {
         if (typeof(MapsLib.getInfoboxHTML != 'undefined'))
         {
+            // NOTE: Google's InfoWindow API currently provides no way to shorten the tail,
+            // which is problematic when viewing on a mobile device in landscape mode
+
             MapsLib.infoWindow.setOptions({
               content: MapsLib.getInfoboxHTML(e.row),
               position: e.latLng,
