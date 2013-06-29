@@ -309,15 +309,11 @@ var MapsLib = {
           // $.address.parameter('address', encodeURIComponent(address));
           // $.address.parameter('radius', encodeURIComponent(MapsLib.searchRadius));
 
-          // HACK: mobile device puts pinpoint at upper-left corner when we zoom or adjust bounds,
-          // so we offset it manually.
-          var offset = MapsLib.searchRadius / 20000000; // quick and dirty estimate
-          var NW_point = new google.maps.LatLng(MapsLib.currentPinpoint.jb + offset*$(document).height()*.75, MapsLib.currentPinpoint.kb - offset*$(document).width()*1.1);
-          
-          map.setCenter(NW_point);
-          MapsLib.map_centroid = NW_point;
+          map.setCenter(MapsLib.currentPinpoint);
+          MapsLib.map_centroid = MapsLib.currentPinpoint;
 
           // using bounds instead of zoom to fit search radius in map
+          // already tried map.fitBounds(MapsLib.searchRadiusCircle.getBounds()) after calling drawSearchRadiusCircle;
           var bounds = new google.maps.LatLngBounds();
           var radius_est = 3.0 * MapsLib.searchRadius / 100000000; // quick and dirty estimate, not quite lat/lng coordinates
           bounds.extend(new google.maps.LatLng(MapsLib.currentPinpoint.jb - radius_est, MapsLib.currentPinpoint.kb));

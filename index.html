@@ -105,6 +105,20 @@
                 color: white;
             }
 
+            #map_content {
+              padding: 0;
+              width: 100%;
+              height: 100%;
+              overflow: hidden;
+            }
+
+            #map_canvas {
+              width: 100%;
+              height: 100%;
+              padding: 0;
+              text-shadow: none;
+            }
+
             /* custom icons */
             .ui-icon-location {
               background-image: url(source/images/icons-18-white-location.png);
@@ -119,16 +133,20 @@
 
   <div data-role="page" id="page-map">
     <div data-theme="a" data-role="header">
+  <!-- About button -->
       <a id="about" data-role="button" data-transition="slide"
       data-direction="reverse" href=
       "#page-about" data-icon="info" data-iconpos="left" class=
-      "ui-btn-left">About</a> <a data-role="button"
-      data-transition="slidedown" href="#page-search" data-icon=
+      "ui-btn-left">About</a>
+  <!-- Search button -->
+  <a data-role="button"
+      data-transition="slide" href="#page-search" data-icon=
       "search" data-iconpos="right" class="ui-btn-right">Search</a>
 
       <h3><span id="titlebar">Fusion Table Data</span></h3>
     </div>
 
+  <!-- MaxRadius popup message -->
     <div data-role="popup" id="popupDialog" data-overlay-theme="a" data-theme="c" style="max-width:400px;" class="ui-corner-all">
       <div data-role="content" data-theme="d" class="ui-corner-bottom ui-content">
         <p id="maxRadiusExceededMessageText"></p> 
@@ -136,24 +154,27 @@
       </div>
     </div>
 
-    <div data-role="content" style="">
+  <!-- The Map -->
+    <div data-role="content" id="map_content" style="">
       <div id="map_canvas" style=
       "position:absolute;top:42px;bottom:42px;left:0px;right:0px;">
       </div>
     </div>
 
-  <!-- Nearby -->
+  <!-- Nearby button -->
     <div data-theme="a" data-role="footer" data-position="fixed"
     style="height:42px">
       <a id="nearby" data-role="button" href="#nearby" data-icon=
       "location" data-iconpos="left" class="ui-btn-left">Nearby</a>
+
+  <!-- List button -->
       <a data-role="button" href="#page-list" data-icon="bars" id=
       "listview" data-transition="slideup" data-iconpos="right"
       class="ui-btn-right">List</a>
     </div>
   </div>
 
-  <!-- About -->
+  <!-- About view -->
   <div data-role="page" id="page-about">
     <div data-theme="a" data-role="header">
       <a data-role="button" data-transition="slide" data-icon="arrow-l" data-iconpos=
@@ -190,7 +211,7 @@
   <div data-role="page" id="page-search">
     <div data-theme="a" data-role="header">
       <a data-role="button" data-direction="reverse"
-      data-transition="slidedown" href="index.html#page-map"
+      data-transition="slide" href="index.html#page-map"
       data-icon="arrow-l" data-iconpos="left" class=
       "ui-btn-left">Back</a>
 
