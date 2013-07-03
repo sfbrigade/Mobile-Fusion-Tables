@@ -254,6 +254,10 @@ var MapsLib = {
     // maintains map centerpoint for responsive design
     google.maps.event.addDomListener(map, 'idle', function() {
         MapsLib.calculateCenter();
+        google.maps.event.trigger(map, 'resize');
+        map.setCenter(MapsLib.map_centroid);
+        $('#map_canvas').width = "100%";
+        $('#map_canvas').height = "100%";
     });
 
     google.maps.event.addDomListener(window, 'resize', function() {
