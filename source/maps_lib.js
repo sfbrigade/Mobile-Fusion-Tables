@@ -9,6 +9,9 @@
  *
  * Date: 12/10/2012
  *
+ * To Customize, replace the values and implementations between the
+ * "CUSTOM DATA AND CODE" markers.  It's all in one chunk below.
+ *
  */
 
 var MapsLib = MapsLib || {};
@@ -66,7 +69,7 @@ var MapsLib = {
 
   // Returns HTML text for infobox contents based on row data.
   // Also used to populate cells in 'list' view.
-  getInfoboxHTML: function(row, isListView) {
+  customInfoboxHTML: function(row, isListView) {
         if (typeof(isListView)==='undefined') isListView = false;
 
         // Helper function - allows for default value and missing columns.
@@ -116,6 +119,36 @@ var MapsLib = {
         }
         html += "</p></div>"; // End infobox-container
         return html;
+  },
+
+  // whatever comes after "WHERE" in your FusionTable query should go here
+  customWhereClause: function () {
+    // Custom filters for filtering by food score
+    var scoreRange = $("#score-filter").find(":selected").val()
+    var searchClause = "'last_score'";
+    switch (scoreRange*1)
+    {
+      case 1:
+        searchClause += ">90";
+        break;
+      case 2:
+        searchClause += ">85 AND 'last_score' <= 90 ";
+        break;
+      case 3:
+        searchClause += ">70 AND 'last_score' <= 85 ";
+        break;
+      case 4:
+        searchClause += "<=70 AND 'last_score' > 0 "
+        break;
+      default:
+        searchClause += ">0"; // ignoring 0 because they're not restaurants
+        break;
+    }
+    return searchClause;
+  },
+
+  customInit: function () {
+    // add custom initialization code here
   },
 
   //////////////////////////////
@@ -275,7 +308,7 @@ var MapsLib = {
     $("#result_count").hide();
 
     //-----custom initializers-------
-
+    MapsLib.customInit();
     //-----end of custom initializers-------
 
     //run the default search
@@ -290,14 +323,11 @@ var MapsLib = {
     var whereClause = MapsLib.locationColumn + " not equal to ''";
 
     //-----custom filters-------
-    // Custom filters for filtering by food score
-    var scoreRange = $("#score-filter").find(":selected").val()
-    var searchScore = " AND 'last_score'";
-    if (scoreRange == "1") { searchScore += ">90"}
-    if (scoreRange == "2") { searchScore += ">85 AND 'last_score' <= 90 " }
-    if (scoreRange == "3") { searchScore += ">70 AND 'last_score' <= 85 "}
-    if (scoreRange == "4") { searchScore += "<=70"}
-    if (scoreRange != "0") {whereClause += searchScore}
+    var extraFilter = MapsLib.customWhereClause();
+    if (extraFilter.length > 0)
+    {
+      whereClause += " AND " + extraFilter;
+    }
     //-------end of custom filters--------
 
     if (address != "" && address != undefined) {
@@ -369,13 +399,13 @@ var MapsLib = {
     });
     google.maps.event.clearListeners(MapsLib.searchrecords, 'click');
     google.maps.event.addListener(MapsLib.searchrecords, 'click', function(e) {
-        if (typeof(MapsLib.getInfoboxHTML != 'undefined'))
+        if (typeof(MapsLib.customInfoboxHTML != 'undefined'))
         {
             // NOTE: Google's InfoWindow API currently provides no way to shorten the tail,
             // which is problematic when viewing on a mobile device in landscape mode
 
             MapsLib.infoWindow.setOptions({
-              content: MapsLib.getInfoboxHTML(e.row),
+              content: MapsLib.customInfoboxHTML(e.row),
               position: e.latLng,
               pixelOffset: e.pixelOffset
             });
@@ -541,7 +571,7 @@ var MapsLib = {
           }
 
           var row_html = '<li data-corners="false" data-shadow="false" data-iconshadow="true" data-wrapperels="div" data-icon="arrow-r" data-iconpos="right" data-theme="d" class="ui-btn ui-btn-icon-right ui-li-has-arrow ui-li ui-btn-up-d"><div class="ui-btn-inner ui-li"><div class="ui-btn-text"><a href="todo.html" data-transition="slidedown" class="ui-link-inherit">';
-          row_html += MapsLib.getInfoboxHTML(row, true);
+          row_html += MapsLib.customInfoboxHTML(row, true);
           row_html += '</a></div><span class="ui-icon ui-icon-arrow-r ui-icon-shadow">&nbsp;</span></div></li>';
 
           $("ul#listview").append(row_html);
