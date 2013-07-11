@@ -160,10 +160,12 @@ var MapsLib = {
   map_centroid:       null, // gets initialized below
   num_list_rows:      0, 
   in_query:           false, 
-  addrMarkerImage:    'http://derekeder.com/images/icons/blue-pushpin.png',
-  blueDotImage:       'http://maps.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png',
+  addrMarkerImage:    '//maps.google.com/intl/en_us/mapfiles/ms/micons/red-dot.png',
+  blueDotImage:       '//maps.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png',
   currentPinpoint:    null,
   infoWindow:         new google.maps.InfoWindow({}),
+  overrideCenter:     false, 
+  ignoreResize:       false,
 
   initialize: function() {
     document.title = MapsLib.title;
@@ -172,7 +174,7 @@ var MapsLib = {
     $( "#result_count" ).html("");
     MapsLib.map_centroid = MapsLib.map_default_center;
 
-   geocoder = new google.maps.Geocoder();
+    geocoder = new google.maps.Geocoder();
     var myOptions = {
       zoom: MapsLib.defaultZoom,
       center: MapsLib.map_centroid,
@@ -286,15 +288,21 @@ var MapsLib = {
 
     // maintains map centerpoint for responsive design
     google.maps.event.addDomListener(map, 'idle', function() {
-        MapsLib.calculateCenter();
-        google.maps.event.trigger(map, 'resize');
+        if (!MapsLib.overrideCenter)
+        {
+          MapsLib.map_centroid = map.getCenter();
+        }
+        google.maps.event.trigger(map, 'resize'); // resolves map redraw issue on mobile devices
         map.setCenter(MapsLib.map_centroid);
-        $('#map_canvas').width = "100%";
-        $('#map_canvas').height = "100%";
+        MapsLib.overrideCenter = false;
+        MapsLib.ignoreResize = false;
     });
 
     google.maps.event.addDomListener(window, 'resize', function() {
-        map.setCenter(MapsLib.map_centroid);
+        if (!MapsLib.ignoreResize)
+        {
+          map.setCenter(MapsLib.map_centroid);
+        }
     });
 
     MapsLib.searchrecords = null;
@@ -313,6 +321,11 @@ var MapsLib = {
 
     //run the default search
     MapsLib.doSearch();
+  },
+
+  refreshMap: function() {
+    map.panBy(-1,0);
+    map.panBy(1,0);
   },
 
   doSearch: function(location) {
@@ -414,6 +427,7 @@ var MapsLib = {
     });
     MapsLib.searchrecords.setMap(map);
     MapsLib.getCount(whereClause);
+    MapsLib.overrideCenter = true;
   },
 
     clearSearch: function() {
@@ -483,7 +497,7 @@ var MapsLib = {
     }
 
     var sql = encodeURIComponent(queryStr.join(" "));
-    var qstr = "https://www.googleapis.com/fusiontables/v1/query?sql="+sql+"&callback="+callback+"&key="+MapsLib.googleApiKey;
+    var qstr = "//www.googleapis.com/fusiontables/v1/query?sql="+sql+"&callback="+callback+"&key="+MapsLib.googleApiKey;
     console.log("Query: " + qstr);
     $.ajax({url: qstr, dataType: "jsonp"});
   },
@@ -577,11 +591,6 @@ var MapsLib = {
           $("ul#listview").append(row_html);
       }
       MapsLib.num_list_rows += numRows;
-  },
-
-  // maintains map centerpoint for responsive design
-  calculateCenter: function() {
-    MapsLib.map_centroid = map.getCenter();
   },
 
   //converts a slug or query string in to readable text

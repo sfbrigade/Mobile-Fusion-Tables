@@ -161,7 +161,7 @@
   <div data-role="page" id="page-about">
     <div data-theme="a" data-role="header">
       <a data-role="button" data-transition="slide" data-icon="arrow-l" data-iconpos=
-      "left" href="#page-map" class="ui-btn-left">Back</a>
+      "left" href="#page-map" class="ui-btn-left" id="about_back">Back</a>
 
       <h3>About</h3>
     </div>
@@ -177,7 +177,7 @@
       <a data-role="button" data-direction="reverse"
       data-transition="slideup" href="index.html#page-map"
       data-icon="arrow-l" data-iconpos="left" class=
-      "ui-btn-left">Back</a>
+      "ui-btn-left" id="list_back">Back</a>
 
       <h3>List</h3>
     </div>
@@ -196,7 +196,7 @@
       <a data-role="button" data-direction="reverse"
       data-transition="slide" href="index.html#page-map"
       data-icon="arrow-l" data-iconpos="left" class=
-      "ui-btn-left">Back</a>
+      "ui-btn-left" id="search_back">Back</a>
 
       <h3>Search</h3>
     </div>
@@ -244,7 +244,7 @@
 </script>
 
 <script type="text/javascript" src=
-"http://maps.google.com/maps/api/js?sensor=false&amp;libraries=places,geometry">
+"//maps.google.com/maps/api/js?sensor=false&amp;libraries=places,geometry">
 </script>
 
 <script type="text/javascript" src="source/maps_lib.js">
@@ -258,6 +258,16 @@
       $("#search").click(function(){
         MapsLib.doSearch();
         window.location = "#page-map";
+      });
+      $("#search_back").click(function(){
+        MapsLib.ignoreResize = true;
+      });
+      $("#about_back").click(function(){
+        MapsLib.ignoreResize = true;
+      });
+      $("#list_back").click(function(){
+        MapsLib.ignoreResize = true;
+        MapsLib.refreshMap();
       });
   });
 
