@@ -254,7 +254,7 @@
   <script type="text/javascript">
   $(function() {
       MapsLib.initialize();
-      $("#search_address").geocomplete();
+      $("#search_address").geocomplete({country: 'us'});
       $("#search").click(function(){
         MapsLib.doSearch();
         window.location = "#page-map";
