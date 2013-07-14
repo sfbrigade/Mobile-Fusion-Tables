@@ -497,7 +497,7 @@ var MapsLib = {
     }
 
     var sql = encodeURIComponent(queryStr.join(" "));
-    var qstr = "//www.googleapis.com/fusiontables/v1/query?sql="+sql+"&callback="+callback+"&key="+MapsLib.googleApiKey;
+    var qstr = "https://www.googleapis.com/fusiontables/v1/query?sql="+sql+"&callback="+callback+"&key="+MapsLib.googleApiKey;
     console.log("Query: " + qstr);
     $.ajax({url: qstr, dataType: "jsonp"});
   },
@@ -511,6 +511,7 @@ var MapsLib = {
         console.log(" Reason: " + error[row]["reason"]);
         console.log(" Message: " + error[row]["message"]);
       }
+      return true;
     }
   },
 
@@ -520,7 +521,9 @@ var MapsLib = {
   },
 
   displaySearchCount: function(json) {
-    MapsLib.handleError(json);
+    if (MapsLib.handleError(json)) {
+        return false;
+    }
     var numRows = 0;
     if (json["rows"] != null)
       numRows = json["rows"][0];
@@ -567,7 +570,9 @@ var MapsLib = {
 
   displayListView: function(json) {
       MapsLib.in_query = false;
-      MapsLib.handleError(json);
+      if (MapsLib.handleError(json)) {
+          return false;
+      }
       // Empty the listview object.
       var existingRows = MapsLib.num_list_rows;
       if (existingRows == 0)
@@ -599,9 +604,9 @@ var MapsLib = {
     return decodeURIComponent(text);
   }
 
-  //-----custom functions-------
-  // NOTE: if you add custom functions, make sure to append each one with a comma, except for the last one.
+  //-----custom functions------------------------------------------------------
+  // NOTE: if you add custom functions, make sure to append each one with a 
+  // comma, except for the last one.
   // This also applies to the convertToPlainString function above
-
-  //-----end of custom functions-------
+  //-----end of custom functions-----------------------------------------------
 }
