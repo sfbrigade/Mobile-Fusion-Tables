@@ -45,7 +45,7 @@ var MapsLib = {
 
 
   //-- BEGIN Search customizations --//
-  locationScope:      "san francisco",      //geographical area appended to all address searches
+  locationScope:      "San Francisco, CA",      //format: [City,] STATE.  (can be null/empty)  geographical area for all address searches
   recordName:         "result",       //for showing number of results
   recordNamePlural:   "results",
 
@@ -344,8 +344,20 @@ var MapsLib = {
     //-------end of custom filters--------
 
     if (address != "" && address != undefined) {
-      if (address.toLowerCase().indexOf(MapsLib.locationScope) == -1)
-        address = address + " " + MapsLib.locationScope;
+
+        if (MapsLib.locationScope != null && MapsLib.locationScope.replace(" ","") != "")
+        {
+          // append or replace tail of address with location scope (using commas as scope boundaries)
+          var numCommas = (address.split(",").length - MapsLib.locationScope.split(",").length);
+          var index = null, comma = 0;
+          while (comma < numCommas && index != -1) {
+              index = address.indexOf(",", index+1);
+              comma++;
+          }
+          if (index == null) index = address.length;
+          address = address.substring(0,index) + ", " + MapsLib.locationScope;
+          $("#search_address").val(address);
+        }
 
         geocoder.geocode( { 'address': address}, function(results, status) {
         if (status == google.maps.GeocoderStatus.OK) {
