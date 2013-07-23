@@ -70,55 +70,53 @@ var MapsLib = {
   // Returns HTML text for infobox contents based on row data.
   // Also used to populate cells in 'list' view.
   customInfoboxHTML: function(row, isListView) {
-        if (typeof(isListView)==='undefined') isListView = false;
 
-        // Helper function - allows for default value and missing columns.
-        getValue = function(columnName, defVal) {
-            if (typeof(defVal)==='undefined') defVal='';
-            return (row[columnName] || {"value" : defVal}).value;
-        };
+    html = "<div class='{{classes.infobox}}'> \
+            <div class='score {{classes.score}}'>{{info.score}}</div> \
+            <h4 class='{{classes.name}}'>{{info.name}}</h4> \
+            <p class='{{classes.date}}'><strong>{{info.date}}</strong></p> \
+            <p class='{{classes.address}}'>{{info.address}} \
+            {{{violations_header}}}{{#list violations}}{{/list}} \
+            </p></div>";
 
-        html = isListView ? "<div class='infobox-container-list'>" : "<div class='infobox-container'>";
+    // Helper function - allows for default value and missing columns.
+    getValue = function(columnName, defVal) {
+        if (typeof(defVal)==='undefined') defVal='';
+        return (row[columnName] || {"value" : defVal}).value;
+    };
+    if (typeof(isListView)==='undefined') isListView = false;
+    var classes = {}, info = {};
 
-        // Score.
-        html += "<div class='score " + getValue('last_score_category') + "'>";
-        html += getValue('last_score','?');
-        html += "</div>";
+    classes['infobox'] = isListView ? "infobox-container" : "infobox-container-map";
+    classes['score']   = getValue('last_score_category');
+    classes['name']    = "infobox-header";
+    classes['date']    = "ui-li-desc infobox-subheader";
+    classes['address'] = "ui-li-desc";
 
-        // Business name. 
-        var headerClass = isListView ? "ui-li-heading" : "infobox-header";
-        html += "<h3 class='" + headerClass + "'>" + getValue('name') + "</h3>";
+    info['score']   = getValue('last_score','?');
+    info['name']    = getValue('name');
+    info['date']    = (getValue('last_inspection_date') != "") ? "Inspected " + getValue('last_inspection_date') : "No inspection result";
+    info['address'] = getValue('address');
 
-        // Last inspection date.
-        var dateClass = isListView ? "ui-li-desc" : "ui-li-desc infobox-subheader";
-        html += "<p class='" + dateClass + "'><strong>";
-        if (getValue('last_inspection_date') != '') {
-            html += "Inspected " + getValue('last_inspection_date');
-        } else {
-            html += "No inspection result";
+    var showViolations = !isListView && getValue('violation_1') != "";
+    var header = showViolations ? "<br/><br/><b>Recent violations:</b>" : "";
+    var violations = showViolations ? ['violation_1', 'violation_2', 'violation_3'] : [];
+
+    // Handlebars helper - list items with custom delimiter
+    Handlebars.registerHelper('list', function(items, options) {
+      var out = "";
+      for(var i=0, l=items.length; i<l; i++) {
+        if (getValue(items[i]) != "")
+        {
+          out += "<br>- " + getValue(items[i]);
         }
-        html += "</strong></p>";
+      }
+      return out;
+    });
 
-        // Address.
-        html += "<p class='ui-li-desc'>";
-        if (getValue('address') != "") {
-            html += getValue('address');
-        }
-
-        // Violations if any (and not listview)
-        if (!isListView && getValue('violation_1') != "") {
-            html +=  "<br/><br/>";
-            html += "<b>Recent violations:</b><br/>";
-            html += "- " + getValue('violation_1');
-            if (getValue('violation_2') != "") {
-                html += "<br/>- " + getValue('violation_2');
-            }
-            if (getValue('violation_3') != "") {
-                html += "<br/>- " + getValue('violation_3');
-            }
-        }
-        html += "</p></div>"; // End infobox-container
-        return html;
+    var template = Handlebars.compile(html);
+    //var template = Handlebars.templates['infobox.helper']
+    return template({classes: classes, info: info, violations_header: header, violations: violations});
   },
 
   // whatever comes after "WHERE" in your FusionTable query should go here
@@ -144,6 +142,13 @@ var MapsLib = {
         searchClause += ">0"; // ignoring 0 because they're not restaurants
         break;
     }
+    /*
+    // TODO: enable searching for keywords once violation fields have been merged
+    var keyword = $("#keyword-filter").val();
+    if (keyword.length > 0) {
+      searchClause += " AND 'violations' LIKE '%" + keyword + "%'";
+    }
+    */
     return searchClause;
   },
 
