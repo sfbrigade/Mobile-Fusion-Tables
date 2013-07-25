@@ -46,28 +46,36 @@ var MapsLib = {
 
   //-- BEGIN Custom Infobox template --//
 
-  infoboxTemplate: "<div class='{{class_infobox}}'> \
+  infoboxTemplate: " \
+          {{#if isListView}} \
+            <div class='infobox-container'> \
+          {{else}} \
+            <div class='infobox-container-map'> \
+          {{/if}} \
           <div class='score {{row.last_score_category}}'>{{row.last_score}}</div> \
           <h4 class='infobox-header'>{{row.name}}</h4> \
-          <p class='ui-li-desc infobox-subheader'><strong>Last inspected: \
+          <p class='ui-li-desc infobox-subheader'><strong> \
             {{#if row.last_inspection_date}} \
-              {{row.last_inspection_date}} \
+              Last inspected: {{row.last_inspection_date}} \
             {{else}} \
-              N/A \
+              Last inspected: N/A \
             {{/if}} \
             </strong></p> \
-          <p class='ui-li-desc'>{{row.address}} \
-            <br/><br/><b>Recent violations:</b> \
-            {{#if row.violation_1}} \
-              <br>-{{row.violation_1}} \
-            {{else}} \
-              None \
-            {{/if}} \
-            {{#if row.violation_2}} \
-              <br>-{{row.violation_2}} \
-            {{/if}} \
-            {{#if row.violation_3}} \
-              <br>-{{row.violation_3}} \
+          {{#if isListView}} \
+          {{else}} \
+            <p class='ui-li-desc'>{{row.address}} \
+              <br/><br/><b>Recent violations:</b> \
+              {{#if row.violation_1}} \
+                <br>-{{row.violation_1}} \
+              {{else}} \
+                None \
+              {{/if}} \
+              {{#if row.violation_2}} \
+                <br>-{{row.violation_2}} \
+              {{/if}} \
+              {{#if row.violation_3}} \
+                <br>-{{row.violation_3}} \
+              {{/if}} \
             {{/if}} \
           </p></div>",
 
@@ -78,6 +86,7 @@ var MapsLib = {
   locationScope:      "San Francisco, CA",      //format: [City,] STATE.  (can be null/empty)  geographical area for all address searches
   recordName:         "result",       //for showing number of results
   recordNamePlural:   "results",
+  customSearchFilter: "", // Used to store the current search filter globally.
 
   // the following radii are in meters.  1 mile = 1610 m
   searchRadius:       1610 * 0.5,     // 1/2 mile
@@ -96,14 +105,6 @@ var MapsLib = {
   nearbyZoom:         17,             //zoom level when using nearby location
 
   //-- END Launch/Zoom behavior --//
-
-  // Returns HTML text for infobox contents based on row data.
-  // Also used to populate cells in 'list' view.
-  customInfoboxHTML: function(row, isListView) {
-    var class_infobox = isListView ? "infobox-container" : "infobox-container-map";
-
-    return MapsLib.infoboxCompiled({class_infobox: class_infobox, row: row});
-  },
 
   // whatever comes after "WHERE" in your FusionTable query should go here
   customWhereClause: function () {
@@ -139,9 +140,6 @@ var MapsLib = {
   //////////////////////////////
   // END CUSTOM DATA AND CODE //
   //////////////////////////////
-
-
-
   map_centroid:       null, // gets initialized below
   num_list_rows:      0, 
   in_query:           false, 
@@ -271,8 +269,6 @@ var MapsLib = {
     }
     );
 
-    $("a#listview").click(MapsLib.getListView);
-
     // maintains map centerpoint for responsive design
     google.maps.event.addDomListener(map, 'idle', function() {
         if (!MapsLib.overrideCenter)
@@ -320,13 +316,13 @@ var MapsLib = {
     var address = $("#search_address").val();
     MapsLib.searchRadius = $("#search_radius").val();
 
-    var whereClause = MapsLib.locationColumn + " not equal to ''";
+    var whereClause = MapsLib.locationColumn + " not equal to '' ";
 
     //-----custom filters-------
-    var extraFilter = MapsLib.customWhereClause();
-    if (extraFilter.length > 0)
+    MapsLib.customSearchFilter = MapsLib.customWhereClause();
+    if (MapsLib.customSearchFilter.length > 0)
     {
-      whereClause += " AND " + extraFilter;
+      whereClause += " AND " + MapsLib.customSearchFilter;
     }
     //-------end of custom filters--------
 
@@ -401,7 +397,8 @@ var MapsLib = {
     {
       extracted_row[key] = row[key].value;
     }
-    return MapsLib.customInfoboxHTML(extracted_row, isListView);
+
+    return MapsLib.infoboxCompiled({isListView: isListView ? "true" : "", row: extracted_row});
   },
 
   submitSearch: function(whereClause, map, location) {
@@ -440,7 +437,7 @@ var MapsLib = {
     MapsLib.overrideCenter = true;
   },
 
-    clearSearch: function() {
+  clearSearch: function() {
     if (MapsLib.searchrecords != null)
       MapsLib.searchrecords.setMap(null);
     if (MapsLib.addrMarker != null)
@@ -448,6 +445,7 @@ var MapsLib = {
     if (MapsLib.searchRadiusCircle != null)
       MapsLib.searchRadiusCircle.setMap(null);
     MapsLib.infoWindow.close();
+    MapsLib.customSearchFilter = "";
   },
 
   findMe: function() {
@@ -566,6 +564,10 @@ var MapsLib = {
 
   updateListView: function() {
       var whereClause = MapsLib.locationColumn + " not equal to ''";
+      if (MapsLib.customSearchFilter.length > 0) {
+        whereClause += " AND " + MapsLib.customSearchFilter;
+      }
+
       // HACK: all we really want is the 10 rows that come after the existing MapsLib.num_list_rows.
       //  but now we're querying all the rows up to it.  Is there a way to just get rows x to x+10? 
       var orderClause = "ST_DISTANCE(latitude, LATLNG(" + map.getCenter().lat() + "," + 

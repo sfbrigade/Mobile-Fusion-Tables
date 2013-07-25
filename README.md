@@ -24,3 +24,17 @@ Todo:
 * Write rock-solid docs so that others can clone this and host their own
 fusion tables. Re-arrange the javascript so the 'custom' code goes in one
 place.
+
+
+Other fusion tables:
+--------------------
+SF Transit projects:
+https://www.google.com/fusiontables/DataSource?docid=10zr7wF49yQWKB4A0vAtoKPfvvBPPZQ8BVEfAqDw&pli=1#rows:id=1 
+(searchable version here: http://www.sfcta.org/mystreetsf-map1)
+
+Liquifaction lots in SF:
+https://www.google.com/fusiontables/DataSource?docid=1As4nGAvTYhwEJckR5BnfVGJL5nZnBBhXL9CYTIk#map:id=3
+
+List of banks in SF:
+https://www.google.com/fusiontables/data?docid=1k61KXrFN6j1byAG7Uffc1ou1geO8Zz6umZQrmA8#rows:id=1
+(Searchable version here: http://bankonsanfrancisco.com/map)
