@@ -45,9 +45,10 @@ var MapsLib = {
 
 
   //-- BEGIN Search customizations --//
-  locationScope:      "san francisco",      //geographical area appended to all address searches
+  locationScope:      "San Francisco",      //geographical area appended to all address searches
   recordName:         "result",       //for showing number of results
   recordNamePlural:   "results",
+  customSearchFilter: "", // Used to store the current search filter globally.
 
   // the following radii are in meters.  1 mile = 1610 m
   searchRadius:       1610 * 0.5,     // 1/2 mile
@@ -154,9 +155,6 @@ var MapsLib = {
   //////////////////////////////
   // END CUSTOM DATA AND CODE //
   //////////////////////////////
-
-
-
   map_centroid:       null, // gets initialized below
   num_list_rows:      0, 
   in_query:           false, 
@@ -284,8 +282,6 @@ var MapsLib = {
     }
     );
 
-    $("a#listview").click(MapsLib.getListView);
-
     // maintains map centerpoint for responsive design
     google.maps.event.addDomListener(map, 'idle', function() {
         if (!MapsLib.overrideCenter)
@@ -333,13 +329,13 @@ var MapsLib = {
     var address = $("#search_address").val();
     MapsLib.searchRadius = $("#search_radius").val();
 
-    var whereClause = MapsLib.locationColumn + " not equal to ''";
+    var whereClause = MapsLib.locationColumn + " not equal to '' ";
 
     //-----custom filters-------
-    var extraFilter = MapsLib.customWhereClause();
-    if (extraFilter.length > 0)
+    MapsLib.customSearchFilter = MapsLib.customWhereClause();
+    if (MapsLib.customSearchFilter.length > 0)
     {
-      whereClause += " AND " + extraFilter;
+      whereClause += " AND " + MapsLib.customSearchFilter;
     }
     //-------end of custom filters--------
 
@@ -430,7 +426,7 @@ var MapsLib = {
     MapsLib.overrideCenter = true;
   },
 
-    clearSearch: function() {
+  clearSearch: function() {
     if (MapsLib.searchrecords != null)
       MapsLib.searchrecords.setMap(null);
     if (MapsLib.addrMarker != null)
@@ -438,6 +434,7 @@ var MapsLib = {
     if (MapsLib.searchRadiusCircle != null)
       MapsLib.searchRadiusCircle.setMap(null);
     MapsLib.infoWindow.close();
+    MapsLib.customSearchFilter = "";
   },
 
   findMe: function() {
@@ -556,6 +553,10 @@ var MapsLib = {
 
   updateListView: function() {
       var whereClause = MapsLib.locationColumn + " not equal to ''";
+      if (MapsLib.customSearchFilter.length > 0) {
+        whereClause += " AND " + MapsLib.customSearchFilter;
+      }
+
       // HACK: all we really want is the 10 rows that come after the existing MapsLib.num_list_rows.
       //  but now we're querying all the rows up to it.  Is there a way to just get rows x to x+10? 
       var orderClause = "ST_DISTANCE(latitude, LATLNG(" + map.getCenter().lat() + "," + 
