@@ -269,6 +269,9 @@
         MapsLib.ignoreResize = true;
         MapsLib.refreshMap();
       });
+      $("#listview").click(function(){
+        MapsLib.getListView();
+      });
   });
 
   var _gaq = _gaq || [];
