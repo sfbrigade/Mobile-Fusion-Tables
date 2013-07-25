@@ -59,13 +59,8 @@ var MapsLib = {
           {{/if}} \
           <div class='score {{row.last_score_category}}'>{{row.last_score}}</div> \
           <h4 class='infobox-header'>{{row.name}}</h4> \
-          <p class='ui-li-desc infobox-subheader'><strong> \
-            {{#if row.last_inspection_date}} \
-              Last inspected: {{row.last_inspection_date}} \
-            {{else}} \
-              Last inspected: N/A \
-            {{/if}} \
-            </strong></p> \
+          <p class='ui-li-desc infobox-subheader'> \
+            <strong>Last inspected: {{row.last_inspection_date}}</strong></p> \
           {{#if isListView}} \
           {{else}} \
             <p class='ui-li-desc'>{{row.address}} \
