@@ -44,6 +44,36 @@ var MapsLib = {
   //-- END Fusion Table details --//
 
 
+  //-- BEGIN Custom Infobox template --//
+
+  infoboxTemplate: "<div class='{{class_infobox}}'> \
+          <div class='score {{row.last_score_category}}'>{{row.last_score}}</div> \
+          <h4 class='infobox-header'>{{row.name}}</h4> \
+          <p class='ui-li-desc infobox-subheader'><strong>Last inspected: \
+            {{#if row.last_inspection_date}} \
+              {{row.last_inspection_date}} \
+            {{else}} \
+              N/A \
+            {{/if}} \
+            </strong></p> \
+          <p class='ui-li-desc'>{{row.address}} \
+            <br/><br/><b>Recent violations:</b> \
+            {{#if row.violation_1}} \
+              <br>-{{row.violation_1}} \
+            {{else}} \
+              None \
+            {{/if}} \
+            {{#if row.violation_2}} \
+              <br>-{{row.violation_2}} \
+            {{/if}} \
+            {{#if row.violation_3}} \
+              <br>-{{row.violation_3}} \
+            {{/if}} \
+          </p></div>",
+
+  //-- END Custom Infobox template --//
+
+
   //-- BEGIN Search customizations --//
   locationScope:      "San Francisco, CA",      //format: [City,] STATE.  (can be null/empty)  geographical area for all address searches
   recordName:         "result",       //for showing number of results
@@ -70,53 +100,9 @@ var MapsLib = {
   // Returns HTML text for infobox contents based on row data.
   // Also used to populate cells in 'list' view.
   customInfoboxHTML: function(row, isListView) {
+    var class_infobox = isListView ? "infobox-container" : "infobox-container-map";
 
-    html = "<div class='{{classes.infobox}}'> \
-            <div class='score {{classes.score}}'>{{info.score}}</div> \
-            <h4 class='{{classes.name}}'>{{info.name}}</h4> \
-            <p class='{{classes.date}}'><strong>{{info.date}}</strong></p> \
-            <p class='{{classes.address}}'>{{info.address}} \
-            {{{violations_header}}}{{#list violations}}{{/list}} \
-            </p></div>";
-
-    // Helper function - allows for default value and missing columns.
-    getValue = function(columnName, defVal) {
-        if (typeof(defVal)==='undefined') defVal='';
-        return (row[columnName] || {"value" : defVal}).value;
-    };
-    if (typeof(isListView)==='undefined') isListView = false;
-    var classes = {}, info = {};
-
-    classes['infobox'] = isListView ? "infobox-container" : "infobox-container-map";
-    classes['score']   = getValue('last_score_category');
-    classes['name']    = "infobox-header";
-    classes['date']    = "ui-li-desc infobox-subheader";
-    classes['address'] = "ui-li-desc";
-
-    info['score']   = getValue('last_score','?');
-    info['name']    = getValue('name');
-    info['date']    = (getValue('last_inspection_date') != "") ? "Inspected " + getValue('last_inspection_date') : "No inspection result";
-    info['address'] = getValue('address');
-
-    var showViolations = !isListView && getValue('violation_1') != "";
-    var header = showViolations ? "<br/><br/><b>Recent violations:</b>" : "";
-    var violations = showViolations ? ['violation_1', 'violation_2', 'violation_3'] : [];
-
-    // Handlebars helper - list items with custom delimiter
-    Handlebars.registerHelper('list', function(items, options) {
-      var out = "";
-      for(var i=0, l=items.length; i<l; i++) {
-        if (getValue(items[i]) != "")
-        {
-          out += "<br>- " + getValue(items[i]);
-        }
-      }
-      return out;
-    });
-
-    var template = Handlebars.compile(html);
-    //var template = Handlebars.templates['infobox.helper']
-    return template({classes: classes, info: info, violations_header: header, violations: violations});
+    return MapsLib.infoboxCompiled({class_infobox: class_infobox, row: row});
   },
 
   // whatever comes after "WHERE" in your FusionTable query should go here
@@ -142,13 +128,7 @@ var MapsLib = {
         searchClause += ">0"; // ignoring 0 because they're not restaurants
         break;
     }
-    /*
-    // TODO: enable searching for keywords once violation fields have been merged
-    var keyword = $("#keyword-filter").val();
-    if (keyword.length > 0) {
-      searchClause += " AND 'violations' LIKE '%" + keyword + "%'";
-    }
-    */
+
     return searchClause;
   },
 
@@ -171,8 +151,10 @@ var MapsLib = {
   infoWindow:         new google.maps.InfoWindow({}),
   overrideCenter:     false, 
   ignoreResize:       false,
+  infoboxCompiled:    null,
 
   initialize: function() {
+    MapsLib.infoboxCompiled = Handlebars.compile(MapsLib.infoboxTemplate);
     document.title = MapsLib.title;
     $("#titlebar").text(MapsLib.title);
 
@@ -411,6 +393,17 @@ var MapsLib = {
     }
   },
 
+  infoboxHTMLHelper: function(row, isListView) {
+    if (typeof(isListView) == 'undefined') isListView = false;
+
+    var extracted_row = {}
+    for (key in row)
+    {
+      extracted_row[key] = row[key].value;
+    }
+    return MapsLib.customInfoboxHTML(extracted_row, isListView);
+  },
+
   submitSearch: function(whereClause, map, location) {
     //get using all filters
     //NOTE: styleId and templateId are recently added attributes to load custom marker styles and info windows
@@ -429,13 +422,13 @@ var MapsLib = {
     });
     google.maps.event.clearListeners(MapsLib.searchrecords, 'click');
     google.maps.event.addListener(MapsLib.searchrecords, 'click', function(e) {
-        if (typeof(MapsLib.customInfoboxHTML != 'undefined'))
+        if (typeof(MapsLib.infoboxHTMLHelper) != 'undefined')
         {
             // NOTE: Google's InfoWindow API currently provides no way to shorten the tail,
             // which is problematic when viewing on a mobile device in landscape mode
 
             MapsLib.infoWindow.setOptions({
-              content: MapsLib.customInfoboxHTML(e.row),
+              content: MapsLib.infoboxHTMLHelper(e.row),
               position: e.latLng,
               pixelOffset: e.pixelOffset
             });
@@ -607,7 +600,7 @@ var MapsLib = {
           }
 
           var row_html = '<li data-corners="false" data-shadow="false" data-iconshadow="true" data-wrapperels="div" data-icon="arrow-r" data-iconpos="right" data-theme="d" class="ui-btn ui-btn-icon-right ui-li-has-arrow ui-li ui-btn-up-d"><div class="ui-btn-inner ui-li"><div class="ui-btn-text"><a href="todo.html" data-transition="slidedown" class="ui-link-inherit">';
-          row_html += MapsLib.customInfoboxHTML(row, true);
+          row_html += MapsLib.infoboxHTMLHelper(row, true);
           row_html += '</a></div><span class="ui-icon ui-icon-arrow-r ui-icon-shadow">&nbsp;</span></div></li>';
 
           $("ul#listview").append(row_html);
