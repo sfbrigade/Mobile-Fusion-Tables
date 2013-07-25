@@ -46,6 +46,11 @@ var MapsLib = {
 
   //-- BEGIN Custom Infobox template --//
 
+  // Handlebars template using the following variables:
+  //  - row.COLUMN_NAME, returns value for given column in your FusionTable row
+  //  - isListView, which evaluates to:
+  //      - false when populating a map infobox
+  //      - true when populating an entry in "List" view
   infoboxTemplate: " \
           {{#if isListView}} \
             <div class='infobox-container'> \
