@@ -82,14 +82,45 @@ var MapsLib = {
   //-- END Custom Infobox template --//
 
 
+  // Search Settings:
+  // By default, you will get a text field for each column.
+  // However, you can customize search settings using the following attributes:
+  //  - allColumns (default=true):            a text field will appear for each column.
+  //  - allColumnsExactMatch (default=false): allColumns + exact matching of fields.
+  //  - addressDistances:                     array of drop-down options for distance from address
+  //     Format for each entry is [float: zoom*, string: label for drop-down, true if default selection]
+  //     If you don't set this, then it won't have an address search field.
+  //  - dropDowns: array of custom drop-downs, where an entry has the following attributes:
+  //       - label
+  //       - options (drop-down options where an option is [label, Fusion Table SQL-style WHERE clause, true if default selection])
+  //  - columns: array of column fields, where a field has the following attributes:
+  //       - label
+  //       - column: name of column
+  //       - exact_match (default=false, meaningless if options is specified): look for exact match instead of a contains match
+  //  If "allColumns" is true, "columns" will simply override label/match settings for the specified columns
+  // * Fusion Table's "zoom" values, where X+1 has twice the radius of X.  14 = radius of 1 mile on typical mobile device
+
+  searchSettings: { 
+    allColumns: false,
+    addressDistances: [ [16, "2 blocks", true], [15, "1/2 mile"], [14, "1 mile"], [13, "2 miles"] ],
+    dropDowns: [ 
+      { label: "Rating Filter", options: [
+        ["Any Rating", "'last_score' > 0", true],
+        ["Good", "'last_score' > 90"],
+        ["Adequate", "'last_score' > 85 AND 'last_score' <= 90"],
+        ["Needs Improvement", "'last_score' > 70 AND 'last_score' <= 85"],
+        ["Poor", "'last_score' <= 70 AND 'last_score' > 0"]
+      ] }
+    ]
+    //,columns: [
+    //  { label: "Violation", column: "violation_1", exact_match: false }
+    //]
+  },
+
   //-- BEGIN Search customizations --//
   locationScope:      "San Francisco, CA",      //format: [City,] STATE.  (can be null/empty)  geographical area for all address searches
   recordName:         "result",       //for showing number of results
   recordNamePlural:   "results",
-  customSearchFilter: "", // Used to store the current search filter globally.
-
-  // the following radii are in meters.  1 mile = 1610 m
-  searchRadius:       1610 * 0.5,     // 1/2 mile
 
   //-- END Search customizations --//
 
@@ -106,33 +137,6 @@ var MapsLib = {
 
   //-- END Launch/Zoom behavior --//
 
-  // whatever comes after "WHERE" in your FusionTable query should go here
-  customWhereClause: function () {
-    // Custom filters for filtering by food score
-    var scoreRange = $("#score-filter").find(":selected").val()
-    var searchClause = "'last_score'";
-    switch (scoreRange*1)
-    {
-      case 1:
-        searchClause += ">90";
-        break;
-      case 2:
-        searchClause += ">85 AND 'last_score' <= 90 ";
-        break;
-      case 3:
-        searchClause += ">70 AND 'last_score' <= 85 ";
-        break;
-      case 4:
-        searchClause += "<=70 AND 'last_score' > 0 "
-        break;
-      default:
-        searchClause += ">0"; // ignoring 0 because they're not restaurants
-        break;
-    }
-
-    return searchClause;
-  },
-
   customInit: function () {
     // add custom initialization code here
   },
@@ -147,16 +151,20 @@ var MapsLib = {
   blueDotImage:       '//maps.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png',
   currentPinpoint:    null,
   infoWindow:         new google.maps.InfoWindow({}),
+  nearbyPosition:     null,
   overrideCenter:     false, 
   ignoreResize:       false,
   infoboxCompiled:    null,
+  columns:            [],
+  searchRadius:       11, // in zoom units
+  customSearchFilter: "",
 
   initialize: function() {
+    MapsLib.searchRadius = MapsLib.defaultZoom;
+    MapsLib.getColumns("MapsLib.setColumns");
     MapsLib.infoboxCompiled = Handlebars.compile(MapsLib.infoboxTemplate);
     document.title = MapsLib.title;
     $("#titlebar").text(MapsLib.title);
-
-    $( "#result_count" ).html("");
     MapsLib.map_centroid = MapsLib.map_default_center;
 
     geocoder = new google.maps.Geocoder();
@@ -191,7 +199,6 @@ var MapsLib = {
     });
 
     updateCenter = function(userPosition) {
-      var nearbyPosition = null;
       var useNearbyPosition = true;
 
       // don't follow user if maxRadius is 0
@@ -201,11 +208,11 @@ var MapsLib = {
       }
       else
       { 
-        nearbyPosition = new google.maps.LatLng(userPosition.coords.latitude, userPosition.coords.longitude);
+        MapsLib.nearbyPosition = new google.maps.LatLng(userPosition.coords.latitude, userPosition.coords.longitude);
         if (MapsLib.maxRadius > 0)
         {
           // check our distance from the default center
-          var dist = google.maps.geometry.spherical.computeDistanceBetween(nearbyPosition, MapsLib.map_default_center);
+          var dist = google.maps.geometry.spherical.computeDistanceBetween(MapsLib.nearbyPosition, MapsLib.map_default_center);
           if (dist > MapsLib.maxRadius)
           {
             useNearbyPosition = false;
@@ -217,9 +224,9 @@ var MapsLib = {
           }
         }
       }
-      map.setCenter(useNearbyPosition ? nearbyPosition : MapsLib.map_default_center);
+      map.setCenter(useNearbyPosition ? MapsLib.nearbyPosition : MapsLib.map_default_center);
       map.setZoom(useNearbyPosition ? MapsLib.nearbyZoom : MapsLib.defaultZoom);
-      MapsLib.map_centroid = useNearbyPosition ? nearbyPosition : MapsLib.map_default_center;
+      MapsLib.map_centroid = useNearbyPosition ? MapsLib.nearbyPosition : MapsLib.map_default_center;
       if (useNearbyPosition)
       {
         if (MapsLib.localMarker != null)
@@ -227,7 +234,7 @@ var MapsLib = {
           MapsLib.localMarker.setMap(null);
         }
         MapsLib.localMarker = new google.maps.Marker({
-          position: nearbyPosition,
+          position: MapsLib.nearbyPosition,
           map: map,
           icon: MapsLib.blueDotImage,
           animation: google.maps.Animation.DROP,
@@ -264,6 +271,7 @@ var MapsLib = {
     $("a#nearby").click(function(e) {
         //e.stopImmediatePropagation();
         //e.preventDefault();
+        MapsLib.addrMarker.setVisible(false);
         getlocation();
         setTimeout("$('a#nearby').removeClass('ui-btn-active')", 500);
     }
@@ -296,30 +304,128 @@ var MapsLib = {
     if (loadRadius != "") $("#search_radius").val(loadRadius);
     else $("#search_radius").val(MapsLib.searchRadius);
     $(":checkbox").attr("checked", "checked");
-    $("#result_count").hide();
 
     //-----custom initializers-------
     MapsLib.customInit();
     //-----end of custom initializers-------
-
-    //run the default search
-    MapsLib.doSearch();
   },
 
-  refreshMap: function() {
-    map.panBy(-1,0);
-    map.panBy(1,0);
+  // Creates HTML content for search page given searchSettings
+  // See commentary above searchSettings definition for data layout
+  searchHtml: function() {
+    var html = [];
+    var settings = MapsLib.searchSettings;
+    var addressSearched = ("addressDistances" in settings);
+    if (addressSearched)
+    {
+        html = [
+          "<label for='search_address'>Address / Intersection:</label>",
+          "<input class='input-block-level' id='search_address' placeholder='defaults to current location' type='text' />",
+          "<hr><label for='search_radius'>Within:</label>",
+          "<select class='input-small' id='search_radius'>"];
+        var distances = settings.addressDistances;
+        for (var i=0; i<distances.length; i++)
+        {
+          var distEntry = distances[i]; // format: [zoom, label, true if selected]
+          var selected = (distEntry.length > 2 && distEntry[2] == true) ? " selected='selected'" : "";
+          html.push("<option value='" + distEntry[0] + "'" + selected + ">" + distEntry[1] + "</option>");
+        }
+        html.push("</select>");
+    }
+
+    var dropdowns = ("dropDowns" in settings) ? settings.dropDowns : [];
+    for (var i=0; i<dropdowns.length; i++)
+    {
+      var field = dropdowns[i];
+      var field_id = field.label.replace(" ","_");
+      html.push("<hr><label for='sc_" + field_id + "'>" + field.label + ":</label>");
+      html.push("<select data-ref='custom' id='sc_" + field_id + "' name=''>");
+      var options = field.options;
+      for (var j=0; j<options.length; j++)
+      {
+        var option = options[j];
+        var selected = (option.length > 2 && option[2] == true) ? " selected='selected'" : "";
+        html.push('<option value="' + option[1] + '"' + selected + ">" + option[0] + "</option>");
+      }
+      html.push("</select>");
+    }
+
+    var exactMatchAll = ("allColumnsExactMatch" in settings);
+    var columns = ("columns" in settings) ? settings.columns : [];
+
+    if (exactMatchAll || !("allColumns" in settings && settings.allColumns == false))
+    {
+      var customColumns = [];
+      for (var i=0; i<columns.length; i++)
+      {
+        customColumns.push(columns[i].column);
+      }
+      columns = []; // custom columns will get reinserted in column order
+      for (var i=0; i<MapsLib.columns.length; i++)
+      {
+        var columnName = MapsLib.columns[i];
+        if ($.inArray(columnName, ["latitude","longitude"]) >= 0) continue;
+        // skip address field if addressSearched is true
+        if (addressSearched && $.inArray(columnName, ["address","city","state","postal_code"]) >= 0) continue;
+        var cIndex = $.inArray(columnName, customColumns);
+        if (cIndex >= 0)
+        {
+          columns.push(settings.columns[cIndex]);
+        }
+        else
+        {
+          columns.push({column:columnName, label:columnName, exact_match:exactMatchAll});
+        }
+      }
+    }
+
+    for (var i=0; i<columns.length; i++)
+    {
+      var field = columns[i];
+      var placeholder = field.exact_match ? "Exact match (case-sensitive)" : "Match anything containing this text";
+      html.push("<hr><label for='sc_" + field.column + "'>" + field.label + ":</label>");
+      html.push("<input class='input-block-level' data-ref='column' data-field='" + 
+        field.column + "' data-exact='" + field.exact_match + "' id='sc_" + field.column + "' placeholder='" + 
+        placeholder + "' type='text' />");
+    }
+    return html.join("");
   },
 
-  doSearch: function(location) {
+  // Generates search query according to generated HTML for Search section
+  doSearch: function(hideRadius) {
     MapsLib.clearSearch();
-    var address = $("#search_address").val();
-    MapsLib.searchRadius = $("#search_radius").val();
-
-    var whereClause = MapsLib.locationColumn + " not equal to '' ";
 
     //-----custom filters-------
-    MapsLib.customSearchFilter = MapsLib.customWhereClause();
+    var address = $("#search_address").val();
+    MapsLib.searchRadius = $("#search_radius").val()*1;
+    // HACK: search radius was calibrated for min(width,height)=320, so we offset the zoom accordingly
+    var min_diameter = Math.min($(document).width(),$(document).height());
+    var zoomOffset = Math.round(Math.log(min_diameter/320)/Math.LN2);
+
+    var whereClauses = [];
+    $("input[data-ref='column']").each(function( index ) { 
+        var value = $(this).val();
+        if (typeof value != 'undefined' && value.length > 0)
+        { 
+          value = value.replace("'","''"); // escape single quotes for SQL query
+          var column = $(this).attr("data-field");
+          if ($(this).attr("data-exact") == 'true')
+          {
+            whereClauses.push(column + " = '" + value + "'");
+          }
+          else
+          {
+            whereClauses.push(column + " CONTAINS IGNORING CASE '" + value + "'");
+          }
+        }
+    });
+
+    $("select[data-ref='custom']").each(function( index ) { 
+      whereClauses.push($(this).find(":selected").val());
+    });
+
+    MapsLib.customSearchFilter = whereClauses.join(" AND ");
+    var whereClause = MapsLib.locationColumn + " not equal to ''";
     if (MapsLib.customSearchFilter.length > 0)
     {
       whereClause += " AND " + MapsLib.customSearchFilter;
@@ -327,7 +433,7 @@ var MapsLib = {
     //-------end of custom filters--------
 
     if (address != "" && address != undefined) {
-
+        // search w/ specified address
         if (MapsLib.locationScope != null && MapsLib.locationScope.replace(" ","") != "")
         {
           // append or replace tail of address with location scope (using commas as scope boundaries)
@@ -353,18 +459,9 @@ var MapsLib = {
 
           map.setCenter(MapsLib.currentPinpoint);
           MapsLib.map_centroid = MapsLib.currentPinpoint;
+          map.setZoom(MapsLib.searchRadius+zoomOffset-1);
 
-          // using bounds instead of zoom to fit search radius in map
-          // already tried map.fitBounds(MapsLib.searchRadiusCircle.getBounds()) after calling drawSearchRadiusCircle;
-          var bounds = new google.maps.LatLngBounds();
-          var radius_est = 3.0 * MapsLib.searchRadius / 100000000; // quick and dirty estimate, not quite lat/lng coordinates
-          bounds.extend(new google.maps.LatLng(MapsLib.currentPinpoint.jb - radius_est, MapsLib.currentPinpoint.kb));
-          bounds.extend(new google.maps.LatLng(MapsLib.currentPinpoint.jb + radius_est, MapsLib.currentPinpoint.kb));
-          bounds.extend(new google.maps.LatLng(MapsLib.currentPinpoint.jb, MapsLib.currentPinpoint.kb - radius_est));
-          bounds.extend(new google.maps.LatLng(MapsLib.currentPinpoint.jb, MapsLib.currentPinpoint.kb + radius_est));
-
-          map.fitBounds(bounds); 
-
+          MapsLib.localMarker.setVisible(false);
           MapsLib.addrMarker = new google.maps.Marker({
             position: MapsLib.currentPinpoint,
             map: map,
@@ -384,13 +481,33 @@ var MapsLib = {
         }
       });
     }
-    else { //search without geocoding callback
+    else if (MapsLib.searchRadius > 0 && (typeof hideRadius == 'undefined' || hideRadius == false))
+    {
+      // search w/ current location
+      if (typeof MapsLib.localMarker != 'undefined')
+      {
+        MapsLib.localMarker.setVisible(true);
+      }
+      if (typeof MapsLib.addrMarker != 'undefined')
+      {
+        MapsLib.addrMarker.setVisible(false);
+      }
+      map.setCenter(MapsLib.nearbyPosition);
+      MapsLib.map_centroid = MapsLib.nearbyPosition;
+      map.setZoom(MapsLib.searchRadius+zoomOffset-1);
+
+      MapsLib.drawSearchRadiusCircle(MapsLib.nearbyPosition);
+      MapsLib.submitSearch(whereClause, map, MapsLib.nearbyPosition);
+    }
+    else
+    {
+      // non-user search or address fields disabled
       MapsLib.submitSearch(whereClause, map);
     }
   },
 
   infoboxHTMLHelper: function(row, isListView) {
-    if (typeof(isListView) == 'undefined') isListView = false;
+    if (typeof isListView == 'undefined') isListView = false;
 
     var extracted_row = {}
     for (key in row)
@@ -425,7 +542,7 @@ var MapsLib = {
             // which is problematic when viewing on a mobile device in landscape mode
 
             MapsLib.infoWindow.setOptions({
-              content: MapsLib.infoboxHTMLHelper(e.row),
+              content: MapsLib.infoboxHTMLHelper((typeof e == 'undefined') ? {} : e.row),
               position: e.latLng,
               pixelOffset: e.pixelOffset
             });
@@ -433,7 +550,6 @@ var MapsLib = {
         }
     });
     MapsLib.searchrecords.setMap(map);
-    MapsLib.getCount(whereClause);
     MapsLib.overrideCenter = true;
   },
 
@@ -448,36 +564,8 @@ var MapsLib = {
     MapsLib.customSearchFilter = "";
   },
 
-  findMe: function() {
-    // Try W3C Geolocation (Preferred)
-    var foundLocation;
-    if(navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function(position) {
-        foundLocation = new google.maps.LatLng(position.coords.latitude,position.coords.longitude);
-        MapsLib.addrFromLatLng(foundLocation);
-      }, null);
-
-    }
-    else {
-      alert("Sorry, we could not find your location.");
-    }
-  },
-
-  addrFromLatLng: function(latLngPoint) {
-    geocoder.geocode({'latLng': latLngPoint}, function(results, status) {
-      if (status == google.maps.GeocoderStatus.OK) {
-        if (results[1]) {
-          $('#search_address').val(results[1].formatted_address);
-          $('.hint').focus();
-          MapsLib.doSearch();
-        }
-      } else {
-        alert("Geocoder failed due to: " + status);
-      }
-    });
-  },
-
   drawSearchRadiusCircle: function(point) {
+      var radiusMeters = (100 * Math.pow(2, (18-MapsLib.searchRadius)));
       var circleOptions = {
         strokeColor: "#4b58a6",
         strokeOpacity: 0.3,
@@ -488,9 +576,14 @@ var MapsLib = {
         center: point,
         clickable: false,
         zIndex: -1,
-        radius: parseInt(MapsLib.searchRadius)
+        radius: radiusMeters
       };
       MapsLib.searchRadiusCircle = new google.maps.Circle(circleOptions);
+  },
+
+  getColumns: function(callback) {
+    var qstr = "https://www.googleapis.com/fusiontables/v1/tables/" + MapsLib.fusionTableId + "/columns?callback="+callback + "&key=" + MapsLib.googleApiKey;
+    $.ajax({url: qstr, dataType: "jsonp"});
   },
 
   query: function(selectColumns, whereClause, orderClause, callback) {
@@ -523,38 +616,20 @@ var MapsLib = {
     }
   },
 
-  getCount: function(whereClause) {
-    var selectColumns = "Count()";
-    MapsLib.query(selectColumns, whereClause, null, "MapsLib.displaySearchCount");
-  },
-
-  displaySearchCount: function(json) {
+  setColumns: function(json) {
     if (MapsLib.handleError(json)) {
         return false;
     }
-    var numRows = 0;
-    if (json["rows"] != null)
-      numRows = json["rows"][0];
-
-    var name = MapsLib.recordNamePlural;
-    if (numRows == 1)
-    name = MapsLib.recordName;
-    $( "#result_count" ).fadeOut(function() {
-        $( "#result_count" ).html(MapsLib.addCommas(numRows) + " " + name + " found");
-      });
-    $( "#result_count" ).fadeIn();
-  },
-
-  addCommas: function(nStr) {
-    nStr += '';
-    x = nStr.split('.');
-    x1 = x[0];
-    x2 = x.length > 1 ? '.' + x[1] : '';
-    var rgx = /(\d+)(\d{3})/;
-    while (rgx.test(x1)) {
-      x1 = x1.replace(rgx, '$1' + ',' + '$2');
+    var all_columns = [];
+    var num_columns = json["items"].length;
+    for (var i = 0; i < num_columns; i++)
+    {
+      all_columns.push(json["items"][i]["name"]);
     }
-    return x1 + x2;
+    MapsLib.columns = all_columns;
+    $("#section-search").html(MapsLib.searchHtml());
+    $("#search_address").geocomplete({country: 'us'});
+    MapsLib.doSearch(true);
   },
 
   getListView: function() {

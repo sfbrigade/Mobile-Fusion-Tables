@@ -79,6 +79,12 @@
                 color: white;
             }
 
+            /* using hr as spacer between search fields */
+            hr { 
+              display: block; height: 8px;
+              border: 0; margin: 0; padding: 0;
+            }
+
             #map_content {
               padding: 0;
               width: 100%;
@@ -195,39 +201,8 @@
     </div>
 
     <div data-role="content">
-        <div data-role="fieldcontain">
-
-            <label for="score-filter">Rating Filter:</label>
-            <select id="score-filter" name="">
-                <option value="0" selected="selected">
-                    Any Rating
-                </option>
-                <option value="1">
-                    Good
-                </option>
-                <option value="2">
-                    Adequate
-                </option>
-                <option value="3">
-                    Needs Improvement
-                </option>
-                <option value="4">
-                    Poor
-                </option>
-            </select>
-            
-            <label for="search_address">Address:</label>
-            <input class='input-block-level' id='search_address' placeholder='Enter an address or an intersection' type='text' />
-
-            <label for="search_radius">Within:</label>
-            <select class='input-small' id='search_radius'>
-              <option value='400'>2 blocks</option>
-              <option value='805'>1/2 mile</option>
-              <option value='1610'>1 mile</option>
-              <option value='3220'>2 miles</option>
-            </select>
-          <button class="btn" id="search">Search</button>
-        </div>
+        <div id="section-search" data-role="fieldcontain"></div>
+        <button class="btn" id="search">Search</button>
     </div>
   </div>
 
@@ -246,7 +221,6 @@
   <script type="text/javascript">
   $(function() {
       MapsLib.initialize();
-      $("#search_address").geocomplete({country: 'us'});
       $("#search").click(function(){
         MapsLib.doSearch();
         window.location = "#page-map";
