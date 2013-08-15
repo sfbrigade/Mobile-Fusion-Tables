@@ -98,7 +98,7 @@ var MapsLib = {
   //       - column: name of column
   //       - exact_match (default=false, meaningless if options is specified): look for exact match instead of a contains match
   //  If "allColumns" is true, "columns" will simply override label/match settings for the specified columns
-  // * Fusion Table's "zoom" values, where X+1 has twice the radius of X.  14 = radius of 1 mile on typical mobile device
+  // * Fusion Table's "zoom" values, where X-1 covers twice the radius of X.  14 = radius of 1 mile on typical mobile device
 
   searchSettings: { 
     allColumns: false,
