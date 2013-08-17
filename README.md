@@ -13,17 +13,11 @@ or via the bit.ly link: http://bit.ly/fusion-mobile
 
 Todo:
 -----
-* Have a 'sample_data' directory containing.. 
+* Have a 'sample_data' directory containing:
     * the fusion table .csv
     * a template to generate the sample_data/business/ID.html pages
     * a python file to run over the csv and regen the ID.html pages
     * A comment on where the data came from!
-
-* Finish the about page
-
-* Write rock-solid docs so that others can clone this and host their own
-fusion tables. Re-arrange the javascript so the 'custom' code goes in one
-place.
 
 
 Other fusion tables:
