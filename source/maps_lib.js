@@ -1,171 +1,21 @@
 /*!
- * Mobile version of Derek Eder's searchable map template
- * with Google Fusion Tables
- * http://derekeder.com/searchable_map_template/
+ * Mobile version of Derek Eder's searchable map template with Google Fusion Tables
+ * https://github.com/sfbrigade/FusionTable-Map-MobileTemplate
  *
- * Copyright 2012, Derek Eder
+ * Original map template Copyright 2012, Derek Eder
  * Licensed under the MIT license.
  * https://github.com/derekeder/FusionTable-Map-Template/wiki/License
  *
- * Date: 12/10/2012
- *
- * To Customize, replace the values and implementations between the
- * "CUSTOM DATA AND CODE" markers.  It's all in one chunk below.
- *
+ * Do not change this file unless you know what you're doing.
+ * All customizations live in your fusiontable_settings.js file.
  */
 
 var MapsLib = MapsLib || {};
-var MapsLib = {
-
-  ///////////////////////
-  // BEGIN CUSTOM DATA //
-  ///////////////////////
-
-
-  //-- BEGIN Fusion Table details (using v1 Fusion Tables API) --//
-  //See https://developers.google.com/fusiontables/docs/v1/migration_guide for more info
-
-  //the encrypted Table ID of your Fusion Table (found under File => About)
-  fusionTableId:      "1kjZeEXWdu2NmsWKFnMoqek4f0EV-dVIJjxMHg6w",
-
-  //*New Fusion Tables Requirement* API key. found at https://code.google.com/apis/console/
-  //*Important* this key is for demonstration purposes. please register your own.
-  googleApiKey:       "AIzaSyAMVBSXes-6P-gWaxRj20GK8NT6WDVpozM",
-
-  //name of the location column in your Fusion Table.
-  //NOTE: if your location column name has spaces in it, surround it with single quotes
-  locationColumn:     "latitude",
-  
-  //center that your map defaults to
-  map_default_center: new google.maps.LatLng(37.77, -122.45), 
-
-  maxRadiusFromMapCenter: 1610 * 5,   // -1: always start at current location
-                                      //  0: always start at map_default_center
-                                      // >0: (in meters) start at map_default_center if we're more than maxRadius away
-                                      //     sends alert with maxRadiusExceededMessage (unless it's empty) 
-  maxRadiusExceededMessage: "Your location is far away from San Francisco.  Defaulting to city limits.",
-
-  // Using Fusion Table's "zoom" levels, where X-1 covers twice the radius of X.
-  // A zoom level of 14 = radius of 1 mile on typical iPhone
-  defaultZoom:        11,             //zoom level when map is loaded (bigger is more zoomed in)
-  nearbyZoom:         17,             //zoom level when using nearby location
-
-  //-- END Launch/Zoom behavior --//
-
-
-  //-- END Fusion Table details --//
-
-
-  //-- BEGIN custom content --//
-
-  // top title (including title of website)
-  title: "Inspection Data",
-
-  aboutPage: " \
-    <h3>About Inspection Data</h3> \
-    <p>This is a demonstration of a Mobile Template using Fusion Tables.  Developed by SF Brigade for Code For America, and free for public use.  This particular application uses health inspection data regarding businesses in San Francisco.</p> \
-    <p>To use this template for your own Fusion Table data, simply copy the root folder and contents to your repository and replace the parameters at the top of maps_lib.js to match your own data.</p> \
-    ",
-
-  infoboxCSS: " \
-    .infobox-container-map { width:220px; } \
-    .infobox-header { display:inline; padding-right: 10px; } \
-    .infobox-subheader { padding-top: 5px; } \
-    .moreinfo { margin-left:7px; min-width:18px; position:absolute; \
-        top:45%; bottom:45%; min-height:18px; } \
-    .score { float:left; font-size:medium; padding:5px; border:1px solid black; margin:2px 7px 5px 0px; } \
-    .score.grn_blank { background-color: #00de3c; color:white; } \
-    .score.ltblu_blank { background-color: #55d7d7; color: white; } \
-    .score.orange_blank { background-color: #ff9c00; color: white; } \
-    .score.red_blank { background-color: #fb6155; color: white; } \
-  ",
-
-  // Handlebars template using the following variables:
-  //  - row.COLUMN_NAME, returns value for given column in your FusionTable row
-  //  - isListView, which evaluates to:
-  //      - false when populating a map infobox
-  //      - true when populating an entry in "List" view
-  infoboxTemplate: " \
-          {{#if isListView}} \
-            <div class='infobox-container'> \
-          {{else}} \
-            <div class='infobox-container-map'> \
-          {{/if}} \
-          <div class='score {{row.last_score_category}}'>{{row.last_score}}</div> \
-          <h4 class='infobox-header'>{{row.name}}</h4> \
-          <p class='ui-li-desc infobox-subheader'> \
-            <strong>Last inspected: {{row.last_inspection_date}}</strong></p> \
-          {{#if isListView}} \
-          {{else}} \
-            <p class='ui-li-desc'>{{row.address}} \
-              <br/><br/><b>Recent violations:</b> \
-              {{#if row.violation_1}} \
-                <br>-{{row.violation_1}} \
-              {{else}} \
-                None \
-              {{/if}} \
-              {{#if row.violation_2}} \
-                <br>-{{row.violation_2}} \
-              {{/if}} \
-              {{#if row.violation_3}} \
-                <br>-{{row.violation_3}} \
-              {{/if}} \
-            {{/if}} \
-          </p></div>",
-
-  //-- END custom content --//
-
-
-
-  //-- BEGIN Search customizations --//
-
-  locationScope:      "San Francisco, CA",      //format: [City,] STATE.  (can be null/empty)  geographical area for all address searches
-
-  // Search Settings:
-  // By default, you will get a text field for each column.
-  // However, you can customize search settings using the following attributes:
-  //  - allColumns (default=true):            a text field will appear for each column.
-  //  - allColumnsExactMatch (default=false): allColumns + exact matching of fields.
-  //  - addressDistances:                     array of drop-down options for distance from address
-  //     Format for each entry is [float: zoom level, string: label for drop-down, true if default selection]
-  //     If you don't set this, then it won't have an address search field.
-  //  - dropDowns: array of custom drop-downs, where an entry has the following attributes:
-  //       - label
-  //       - options (drop-down options where an option is [label, Fusion Table SQL-style WHERE clause, true if default selection])
-  //  - columns: array of column fields, where a field has the following attributes:
-  //       - label
-  //       - column: name of column
-  //       - exact_match (default=false, meaningless if options is specified): look for exact match instead of a contains match
-  //  If "allColumns" is true, "columns" will simply override label/match settings for the specified columns
-
-  searchSettings: { 
-    allColumns: false,
-    addressDistances: [ [16, "2 blocks", true], [15, "1/2 mile"], [14, "1 mile"], [13, "2 miles"] ],
-    dropDowns: [ 
-      { label: "Rating Filter", options: [
-        ["Any Rating", "'last_score' > 0", true],
-        ["Good", "'last_score' > 90"],
-        ["Adequate", "'last_score' > 85 AND 'last_score' <= 90"],
-        ["Needs Improvement", "'last_score' > 70 AND 'last_score' <= 85"],
-        ["Poor", "'last_score' <= 70 AND 'last_score' > 0"]
-      ] }
-    ]
-    //,columns: [
-    //  { label: "Violation", column: "violation_1", exact_match: false }
-    //]
-  },
-
-  //-- END Search customizations --//
-
-
-
-  //////////////////////////////
-  // END CUSTOM DATA AND CODE //
-  //////////////////////////////
-
+$.extend(MapsLib, {
   // map and positions
   map:                null, // gets initialized below
-  map_centroid:       null, // gets initialized below
+  map_centroid:       MapsLib.mapDefaultCenter,
+  maxDistanceFromDefaultCenter: 0,
   nearbyPosition:     null,
   overrideCenter:     false, 
   ignoreIdle:         false,
@@ -182,27 +32,54 @@ var MapsLib = {
   // search and list
   columns:            [],
   in_query:           false, 
-  searchRadius:       11, // in zoom units
+  searchRadius:       MapsLib.mapDefaultCenterZoom,
   customSearchFilter: "",
   num_list_rows:      0, 
 
-  initialize: function() {
-    var css = document.createElement("style");
-    css.type = "text/css";
-    css.innerHTML = MapsLib.infoboxCSS;
-    document.head.appendChild(css);
+  stringExists: function(teststr) {
+    return (typeof teststr != 'undefined' && teststr != null && teststr.length > 0);
+  },
 
-    MapsLib.searchRadius = MapsLib.defaultZoom;
+  initialize: function() {
+    if (MapsLib.stringExists(MapsLib.customCSS))
+    {
+      var css = document.createElement("style");
+      css.type = "text/css";
+      css.innerHTML = MapsLib.customCSS;
+      document.head.appendChild(css);
+    }
+
+    var maxDistText = MapsLib.useNearbyLocationIfWithin.toLowerCase();
+    if (maxDistText == "always")
+    {
+      MapsLib.maxDistanceFromDefaultCenter = -1;
+    }
+    else if (maxDistText == "never")
+    {
+      MapsLib.maxDistanceFromDefaultCenter = 0;
+      $("#nearby-name").text("Home");
+    }
+    else
+    {
+      var tokens = maxDistText.split(" ");
+      MapsLib.maxDistanceFromDefaultCenter = tokens[0]*1;
+      if (tokens[1] == "miles")
+      {
+        MapsLib.maxDistanceFromDefaultCenter *= 1610;
+      }
+    }
     MapsLib.getColumns("MapsLib.setColumns");
-    MapsLib.infoboxCompiled = Handlebars.compile(MapsLib.infoboxTemplate);
+    if (MapsLib.stringExists(MapsLib.infoboxTemplate))
+    {
+      MapsLib.infoboxCompiled = Handlebars.compile(MapsLib.infoboxTemplate);
+    }
     document.title = MapsLib.title;
     $("#titlebar").text(MapsLib.title);
     $("#section-about").html(MapsLib.aboutPage);
-    MapsLib.map_centroid = MapsLib.map_default_center;
 
     geocoder = new google.maps.Geocoder();
     var myOptions = {
-      zoom: MapsLib.defaultZoom,
+      zoom: MapsLib.mapDefaultCenterZoom,
       center: MapsLib.map_centroid,
       streetViewControl: false,
       panControl: false,
@@ -233,24 +110,24 @@ var MapsLib = {
     updateCenter = function(userPosition) {
       var useNearbyPosition = true;
 
-      // don't follow user if maxRadius is 0
-      if (MapsLib.maxRadiusFromMapCenter == 0)
+      // don't follow user if maxDistanceFromDefaultCenter is 0
+      if (MapsLib.maxDistanceFromDefaultCenter == 0)
       {
         useNearbyPosition = false;
       }
       else
       { 
         MapsLib.nearbyPosition = new google.maps.LatLng(userPosition.coords.latitude, userPosition.coords.longitude);
-        if (MapsLib.maxRadiusFromMapCenter > 0)
+        if (MapsLib.maxDistanceFromDefaultCenter > 0)
         {
           // check our distance from the default center
-          var dist = google.maps.geometry.spherical.computeDistanceBetween(MapsLib.nearbyPosition, MapsLib.map_default_center);
-          if (dist > MapsLib.maxRadiusFromMapCenter)
+          var dist = google.maps.geometry.spherical.computeDistanceBetween(MapsLib.nearbyPosition, MapsLib.mapDefaultCenter);
+          if (dist > MapsLib.maxDistanceFromDefaultCenter)
           {
             useNearbyPosition = false;
-            if (MapsLib.maxRadiusExceededMessage && MapsLib.maxRadiusExceededMessage.length > 0)
+            if (MapsLib.stringExists(MapsLib.boundsExceededMessage))
             {
-              $( "#maxRadiusExceededMessageText" ).text(MapsLib.maxRadiusExceededMessage);
+              $( "#boundsExceededMessageText" ).text(MapsLib.boundsExceededMessage);
               $( "#popupDialog" ).popup( "open" );
             }
           }
@@ -258,10 +135,10 @@ var MapsLib = {
       }
       if (!useNearbyPosition)
       {
-        MapsLib.nearbyPosition = MapsLib.map_default_center;
+        MapsLib.nearbyPosition = MapsLib.mapDefaultCenter;
       }
       MapsLib.map.setCenter(MapsLib.nearbyPosition);
-      MapsLib.map.setZoom(useNearbyPosition ? MapsLib.nearbyZoom : MapsLib.defaultZoom);
+      MapsLib.map.setZoom(useNearbyPosition ? MapsLib.nearbyZoom : MapsLib.mapDefaultCenterZoom);
       MapsLib.map_centroid = MapsLib.nearbyPosition;
       if (useNearbyPosition)
       {
@@ -276,10 +153,17 @@ var MapsLib = {
           animation: google.maps.Animation.DROP,
           title:"You are here."
         });
-        google.maps.event.addListener(MapsLib.localMarker, 'click', function() {
-            MapsLib.infoWindow.setContent('<div id="infobox-container">You are here.</div>');
-            MapsLib.infoWindow.open(MapsLib.map, this);
-        }); 
+        if (MapsLib.stringExists(MapsLib.nearbyPinInfobox))
+        {
+          google.maps.event.addListener(MapsLib.localMarker, 'click', function() {
+            MapsLib.infoWindow.setOptions({
+              content: '<div id="infobox-container">' + MapsLib.nearbyPinInfobox + '</div>',
+              position: MapsLib.nearbyPosition,
+              pixelOffset: new google.maps.Size(0,-32)
+            });
+            MapsLib.infoWindow.open(MapsLib.map);
+          }); 
+        }
       }
     }
 
@@ -300,7 +184,14 @@ var MapsLib = {
         }
         return false;
     }
-    getlocation();
+    if (MapsLib.maxDistanceFromDefaultCenter != 0)
+    {
+      getlocation();
+    }
+    else
+    {
+      updateCenter();
+    }
     $("#map_canvas").css("visibility","visible"); 
 
     // Wire up event handler for nearby button.
@@ -310,22 +201,20 @@ var MapsLib = {
         MapsLib.safeShow(MapsLib.addrMarker, false);
         getlocation();
         setTimeout("$('a#nearby').removeClass('ui-btn-active');", 500);
-    }
+      }
     );
 
     // maintains map centerpoint for responsive design
     google.maps.event.addDomListener(MapsLib.map, 'idle', function() {
-        if (MapsLib.ignoreIdle)
+      if (!MapsLib.ignoreIdle)
         {
-          return;
-        }
         if (!MapsLib.overrideCenter)
         {
           MapsLib.map_centroid = MapsLib.map.getCenter();
         }
         MapsLib.map.setCenter(MapsLib.map_centroid);
-
         MapsLib.overrideCenter = false;
+      }
     });
     MapsLib.searchrecords = null;
 
@@ -359,11 +248,11 @@ var MapsLib = {
     }
   },
 
-  // Creates HTML content for search page given searchSettings
-  // See commentary above searchSettings definition for data layout
+  // Creates HTML content for search page given searchPage settings
+  // See commentary above searchPage definition (in settings file) for data layout
   searchHtml: function() {
     var html = [];
-    var settings = MapsLib.searchSettings;
+    var settings = MapsLib.searchPage;
     var addressSearched = ("addressDistances" in settings);
     if (addressSearched)
     {
@@ -454,7 +343,7 @@ var MapsLib = {
     var whereClauses = [];
     $("input[data-ref='column']").each(function( index ) { 
         var value = $(this).val();
-        if (typeof value != 'undefined' && value.length > 0)
+        if (MapsLib.stringExists(value))
         { 
           value = value.replace("'","''"); // escape single quotes for SQL query
           var column = $(this).attr("data-field");
@@ -483,17 +372,19 @@ var MapsLib = {
 
     if (address != "" && address != undefined) {
         // search w/ specified address
-        if (MapsLib.locationScope != null && MapsLib.locationScope.replace(" ","") != "")
+        var shortAddress = address;
+        if (MapsLib.addressScope != null && MapsLib.addressScope.replace(" ","") != "")
         {
           // append or replace tail of address with location scope (using commas as scope boundaries)
-          var numCommas = (address.split(",").length - MapsLib.locationScope.split(",").length);
+          var numCommas = (address.split(",").length - MapsLib.addressScope.split(",").length);
           var index = null, comma = 0;
           while (comma < numCommas && index != -1) {
               index = address.indexOf(",", index+1);
               comma++;
           }
           if (index == null) index = address.length;
-          address = address.substring(0,index) + ", " + MapsLib.locationScope;
+          shortAddress = address.substring(0,index);
+          address = shortAddress + ", " + MapsLib.addressScope;
           $("#search_address").val(address);
         }
 
@@ -519,6 +410,17 @@ var MapsLib = {
             title:address
           });
 
+          if (MapsLib.stringExists(MapsLib.addressPinInfobox))
+          {
+            google.maps.event.addListener(MapsLib.addrMarker, 'click', function() {
+              MapsLib.infoWindow.setOptions({
+                content: '<div id="infobox-container">' + MapsLib.addressPinInfobox.replace("{address}",shortAddress) + '</div>',
+                position: MapsLib.currentPinpoint,
+                pixelOffset: new google.maps.Size(0,-32)
+              });
+              MapsLib.infoWindow.open(MapsLib.map);
+            }); 
+          }
           // Map now refocuses instead of filtering by search location
           // whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadius + "))";
 
@@ -586,7 +488,7 @@ var MapsLib = {
     });
     google.maps.event.clearListeners(MapsLib.searchrecords, 'click');
     google.maps.event.addListener(MapsLib.searchrecords, 'click', function(e) {
-        if (typeof(MapsLib.infoboxHTMLHelper) != 'undefined')
+        if (typeof(MapsLib.infoboxHTMLHelper) != 'undefined' && MapsLib.infoboxCompiled != null)
         {
             // NOTE: Google's InfoWindow API currently provides no way to shorten the tail,
             // which is problematic when viewing on a mobile device in landscape mode
@@ -746,4 +648,4 @@ var MapsLib = {
   // comma, except for the last one.
   // This also applies to the convertToPlainString function above
   //-----end of custom functions-----------------------------------------------
-}
+});
