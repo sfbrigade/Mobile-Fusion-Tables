@@ -1,13 +1,13 @@
 /*!
+ * To customize this page for your own data, open fusiontable_settings.js and follow instructions.
+ * You should not have to touch this file.
+ *
  * Mobile version of Derek Eder's searchable map template with Google Fusion Tables
  * https://github.com/sfbrigade/FusionTable-Map-MobileTemplate
  *
  * Original map template Copyright 2012, Derek Eder
  * Licensed under the MIT license.
  * https://github.com/derekeder/FusionTable-Map-Template/wiki/License
- *
- * Do not change this file unless you know what you're doing.
- * All customizations live in your fusiontable_settings.js file.
  */
 
 var MapsLib = MapsLib || {};
@@ -16,6 +16,8 @@ $.extend(MapsLib, {
   map:                null, // gets initialized below
   map_centroid:       MapsLib.mapDefaultCenter,
   maxDistanceFromDefaultCenter: 0,
+  filterByDistance:   true,
+  searchRadiusCircle: null,
   nearbyPosition:     null,
   overrideCenter:     false, 
   ignoreIdle:         false,
@@ -30,6 +32,7 @@ $.extend(MapsLib, {
   infoboxCompiled:    null,
 
   // search and list
+  searchPage:         MapsLib.searchPage || {},
   columns:            [],
   in_query:           false, 
   searchRadius:       MapsLib.mapDefaultCenterZoom,
@@ -48,6 +51,8 @@ $.extend(MapsLib, {
       css.innerHTML = MapsLib.customCSS;
       document.head.appendChild(css);
     }
+    MapsLib.filterByDistance = !("addressFilter" in MapsLib.searchPage && 
+      "filterByDistance" in MapsLib.searchPage.addressFilter && MapsLib.searchPage.addressFilter.filterByDistance == false);
 
     var maxDistText = MapsLib.useNearbyLocationIfWithin.toLowerCase();
     if (maxDistText == "always")
@@ -90,6 +95,7 @@ $.extend(MapsLib, {
     // hide map until we get current location (to avoid snapping)
     $("#map_canvas").css("visibility","hidden"); 
     MapsLib.map = new google.maps.Map($("#map_canvas")[0],myOptions);
+    MapsLib.map.setZoom(MapsLib.nearbyZoom);
     
     // add to list view when user scrolls to the bottom
     $(window).scroll(function() {
@@ -136,12 +142,14 @@ $.extend(MapsLib, {
       if (!useNearbyPosition)
       {
         MapsLib.nearbyPosition = MapsLib.mapDefaultCenter;
+        MapsLib.map.setCenter(MapsLib.nearbyPosition);
+        MapsLib.map.setZoom(MapsLib.mapDefaultCenterZoom);
+        MapsLib.map_centroid = MapsLib.nearbyPosition;
       }
-      MapsLib.map.setCenter(MapsLib.nearbyPosition);
-      MapsLib.map.setZoom(useNearbyPosition ? MapsLib.nearbyZoom : MapsLib.mapDefaultCenterZoom);
-      MapsLib.map_centroid = MapsLib.nearbyPosition;
-      if (useNearbyPosition)
+      else
       {
+        MapsLib.map.setCenter(MapsLib.nearbyPosition);
+        MapsLib.map_centroid = MapsLib.nearbyPosition;
         if (MapsLib.localMarker != null)
         {
           MapsLib.localMarker.setMap(null);
@@ -163,6 +171,14 @@ $.extend(MapsLib, {
             });
             MapsLib.infoWindow.open(MapsLib.map);
           }); 
+        }
+        if (MapsLib.searchRadiusCircle != null && MapsLib.searchRadiusCircle.getMap() != null)
+        {
+          // if radius circle is active, redraw it around new position
+          if (!MapsLib.filterByDistance)
+          {
+            MapsLib.drawSearchRadiusCircle(MapsLib.currentPinpoint);
+          }
         }
       }
     }
@@ -207,7 +223,7 @@ $.extend(MapsLib, {
     // maintains map centerpoint for responsive design
     google.maps.event.addDomListener(MapsLib.map, 'idle', function() {
       if (!MapsLib.ignoreIdle)
-        {
+      {
         if (!MapsLib.overrideCenter)
         {
           MapsLib.map_centroid = MapsLib.map.getCenter();
@@ -216,6 +232,15 @@ $.extend(MapsLib, {
         MapsLib.overrideCenter = false;
       }
     });
+
+    google.maps.event.addDomListener(window, 'resize', function() {
+      if (!MapsLib.ignoreIdle)
+      {
+        MapsLib.map.setCenter(MapsLib.map_centroid);
+        MapsLib.overrideCenter = true;
+      }
+    });
+
     MapsLib.searchrecords = null;
 
     //reset filters
@@ -239,9 +264,8 @@ $.extend(MapsLib, {
     }
     else 
     {
-      MapsLib.map.setCenter(MapsLib.map_centroid);
-      google.maps.event.trigger(MapsLib.map, 'resize');
       MapsLib.ignoreIdle = false;
+      google.maps.event.trigger(MapsLib.map, 'resize');
       // returning from list view sometimes triggers an additional idle call before map.getCenter() is ready
       MapsLib.overrideCenter = true;
       setTimeout("MapsLib.overrideCenter = false", 500);
@@ -252,23 +276,27 @@ $.extend(MapsLib, {
   // See commentary above searchPage definition (in settings file) for data layout
   searchHtml: function() {
     var html = [];
-    var settings = MapsLib.searchPage;
-    var addressSearched = ("addressDistances" in settings);
+    var settings = MapsLib.searchPage || {};
+    var addressSearched = ("addressFilter" in settings);
     if (addressSearched)
     {
         html = [
           "<label for='search_address'>Address / Intersection:</label>",
-          "<input class='input-block-level' id='search_address' placeholder='defaults to current location' type='text' />",
-          "<hr><label for='search_radius'>Within:</label>",
-          "<select class='input-small' id='search_radius'>"];
-        var distances = settings.addressDistances;
-        for (var i=0; i<distances.length; i++)
+          "<input class='input-block-level' id='search_address' placeholder='defaults to current location' type='text' />"
+          ];
+        if ("distances" in settings.addressFilter && settings.addressFilter.distances.length > 0)
         {
-          var distEntry = distances[i]; // format: [zoom, label, true if selected]
-          var selected = (distEntry.length > 2 && distEntry[2] == true) ? " selected='selected'" : "";
-          html.push("<option value='" + distEntry[0] + "'" + selected + ">" + distEntry[1] + "</option>");
+          html.push("<hr><label for='search_radius'>Within:</label>");
+          html.push("<select class='input-small' id='search_radius'>");
+          var distances = settings.addressFilter.distances;
+          for (var i=0; i<distances.length; i++)
+          {
+            var distEntry = distances[i]; // format: [zoom, label, true if selected]
+            var selected = (distEntry.length > 2 && distEntry[2] == true) ? " selected='selected'" : "";
+            html.push("<option value='" + distEntry[0] + "'" + selected + ">" + distEntry[1] + "</option>");
+          }
+          html.push("</select>");
         }
-        html.push("</select>");
     }
 
     var dropdowns = ("dropDowns" in settings) ? settings.dropDowns : [];
@@ -399,7 +427,10 @@ $.extend(MapsLib, {
 
           MapsLib.map.setCenter(MapsLib.currentPinpoint);
           MapsLib.map_centroid = MapsLib.currentPinpoint;
-          MapsLib.map.setZoom(MapsLib.searchRadius+zoomOffset-1);
+          if (MapsLib.searchRadius > 0)
+          {
+            MapsLib.map.setZoom(MapsLib.searchRadius+zoomOffset-1);
+          }
 
           MapsLib.safeShow(MapsLib.localMarker, false);
           MapsLib.addrMarker = new google.maps.Marker({
@@ -421,10 +452,11 @@ $.extend(MapsLib, {
               MapsLib.infoWindow.open(MapsLib.map);
             }); 
           }
-          // Map now refocuses instead of filtering by search location
-          // whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadius + "))";
-
-          MapsLib.drawSearchRadiusCircle(MapsLib.currentPinpoint);
+          if (MapsLib.filterByDistance && MapsLib.searchRadius > 0)
+          {
+            whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadiusMeters() + "))";
+            MapsLib.drawSearchRadiusCircle(MapsLib.currentPinpoint);
+          }
           MapsLib.submitSearch(whereClause, MapsLib.map, MapsLib.currentPinpoint);
         }
         else {
@@ -432,16 +464,24 @@ $.extend(MapsLib, {
         }
       });
     }
-    else if (MapsLib.searchRadius > 0 && (typeof hideRadius == 'undefined' || hideRadius == false))
+    else if ("addressFilter" in MapsLib.searchPage && (typeof hideRadius == 'undefined' || hideRadius == false))
     {
       // search w/ current location
+      MapsLib.currentPinpoint = MapsLib.nearbyPosition;
       MapsLib.safeShow(MapsLib.localMarker, true);
       MapsLib.safeShow(MapsLib.addrMarker, false);
       MapsLib.map.setCenter(MapsLib.nearbyPosition);
       MapsLib.map_centroid = MapsLib.nearbyPosition;
-      MapsLib.map.setZoom(MapsLib.searchRadius+zoomOffset-1);
-
-      MapsLib.drawSearchRadiusCircle(MapsLib.nearbyPosition);
+      if (MapsLib.searchRadius > 0)
+      {
+        if (MapsLib.filterByDistance)
+        {
+          whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.nearbyPosition.toString() + "," + MapsLib.searchRadiusMeters() + "))";
+          MapsLib.drawSearchRadiusCircle(MapsLib.currentPinpoint);
+        }
+        MapsLib.map.setZoom(MapsLib.searchRadius+zoomOffset-1);
+        MapsLib.drawSearchRadiusCircle(MapsLib.nearbyPosition);
+      }
       MapsLib.submitSearch(whereClause, MapsLib.map, MapsLib.nearbyPosition);
     }
     else
@@ -516,21 +556,28 @@ $.extend(MapsLib, {
     MapsLib.customSearchFilter = "";
   },
 
+  searchRadiusMeters: function() {
+    return (100 * Math.pow(2, (18-MapsLib.searchRadius)));
+  },
+
   drawSearchRadiusCircle: function(point) {
-      var radiusMeters = (100 * Math.pow(2, (18-MapsLib.searchRadius)));
-      var circleOptions = {
-        strokeColor: "#4b58a6",
-        strokeOpacity: 0.3,
-        strokeWeight: 1,
-        fillColor: "#4b58a6",
-        fillOpacity: 0.05,
-        map: MapsLib.map,
-        center: point,
-        clickable: false,
-        zIndex: -1,
-        radius: radiusMeters
-      };
-      MapsLib.searchRadiusCircle = new google.maps.Circle(circleOptions);
+    if (typeof MapsLib.searchRadiusCircle != 'undefined' && MapsLib.searchRadiusCircle != null)
+    {
+      MapsLib.searchRadiusCircle.setMap(null);
+    }
+    var circleOptions = {
+      strokeColor: "#4b58a6",
+      strokeOpacity: 0.3,
+      strokeWeight: 1,
+      fillColor: "#4b58a6",
+      fillOpacity: 0.05,
+      map: MapsLib.map,
+      center: point,
+      clickable: false,
+      zIndex: -1,
+      radius: MapsLib.searchRadiusMeters()
+    };
+    MapsLib.searchRadiusCircle = new google.maps.Circle(circleOptions);
   },
 
   getColumns: function(callback) {
@@ -591,14 +638,24 @@ $.extend(MapsLib, {
 
   updateListView: function() {
       var whereClause = MapsLib.locationColumn + " not equal to ''";
+      var orderClause = "";
       if (MapsLib.customSearchFilter.length > 0) {
         whereClause += " AND " + MapsLib.customSearchFilter;
       }
+      if (MapsLib.currentPinpoint != null && MapsLib.searchRadius > 0 && MapsLib.filterByDistance) {
+        whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.map.getCenter().toString() + "," + MapsLib.searchRadiusMeters() + "))";
+        whereClause += " LIMIT " + (MapsLib.num_list_rows + 10);
+      }
+      else
+      {
+        // FusionTable query limitation: There can at most be one spatial condition or "order by distance" condition.  We can't do both.
+        // HACK: all we really want is the 10 rows that come after the existing MapsLib.num_list_rows.
+        //  but there's no way to get rows x to x+10 without also querying all the rows up to it.
+        var centerPoint = (MapsLib.currentPinpoint != null) ? MapsLib.currentPinpoint : MapsLib.map.getCenter();
+        orderClause = "ST_DISTANCE(" + MapsLib.locationColumn + ", LATLNG" + centerPoint.toString() + ")";
+        orderClause += " LIMIT " + (MapsLib.num_list_rows + 10);
+      }
 
-      // HACK: all we really want is the 10 rows that come after the existing MapsLib.num_list_rows.
-      //  but now we're querying all the rows up to it.  Is there a way to just get rows x to x+10? 
-      var orderClause = "ST_DISTANCE(latitude, LATLNG(" + MapsLib.map.getCenter().lat() + "," + 
-                MapsLib.map.getCenter().lng() + ")) LIMIT " + (MapsLib.num_list_rows + 10);
       if (MapsLib.num_list_rows == 0)
       {
         $("ul#listview").html('<li data-corners="false" data-shadow="false" data-iconshadow="true" data-theme="d">Loading results...</li>');

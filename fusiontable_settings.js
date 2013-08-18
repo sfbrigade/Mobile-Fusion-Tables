@@ -32,7 +32,8 @@ $.extend(MapsLib, {
   googleApiKey:       "AIzaSyAMVBSXes-6P-gWaxRj20GK8NT6WDVpozM",
 
   // Name of the location column in your Fusion Table.
-  // NOTE: if your location column name has spaces in it, surround it with single quotes
+  // NOTE 1: if your location column name has spaces in it, surround it with single quotes
+  // NOTE 2: if you have "latitude" and "longitude" columns, just use "latitude"
   locationColumn:     "latitude",
   
 
@@ -140,12 +141,14 @@ $.extend(MapsLib, {
   // However, you can customize search settings using the following attributes:
   //  - allColumns (default=true):            a text field will appear for each column.
   //  - allColumnsExactMatch (default=false): allColumns + exact matching of fields.
-  //  - addressDistances:                     array of drop-down options for distance from address
-  //     Format for each entry is [float: zoom level, string: label for drop-down, true if default selection]
-  //     If you don't set this, then it won't have an address search field.
+  //  - addressFilter: settings for address search field.  Comment this out to have no address search field.
+  //     - filterByDistance (default=true): limit search results to selected distance
+  //     - distances: array of drop-down options for distance from address
+  //       - Each entry is an array of [zoom level, label for drop-down, true if default selection]
+  //       - You can specify zoom level 0 for an option to not filter by distance, and leave zoom as-is.
   //  - dropDowns: array of custom drop-downs, where an entry has the following attributes:
   //       - label
-  //       - options (drop-down options where an option is [label, Fusion Table SQL-style WHERE clause, true if default selection])
+  //       - options: array of drop-down entries.  Each entry is an array of [label, Fusion Table SQL-style WHERE clause, true if default selection]
   //  - columns: array of column fields, where a field has the following attributes:
   //       - label
   //       - column: name of column
@@ -155,7 +158,10 @@ $.extend(MapsLib, {
   //searchPage: {} // use this to just get a text field for each column
   searchPage: { 
     allColumns: false,
-    addressDistances: [ [16, "2 blocks", true], [15, "1/2 mile"], [14, "1 mile"], [13, "2 miles"] ],
+    addressFilter: { 
+      filterByDistance: true,
+      distances: [ [0, "Anywhere"], [16, "2 blocks", true], [15, "1/2 mile"], [14, "1 mile"], [13, "2 miles"] ]
+    },
     dropDowns: [ 
       { label: "Rating Filter", options: [
         ["Any Rating", "'last_score' > 0", true],
