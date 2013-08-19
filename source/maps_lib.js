@@ -16,7 +16,7 @@ $.extend(MapsLib, {
   map:                null, // gets initialized below
   map_centroid:       MapsLib.mapDefaultCenter,
   maxDistanceFromDefaultCenter: 0,
-  filterByDistance:   true,
+  nearbyZoomThreshold:-1,
   searchRadiusCircle: null,
   nearbyPosition:     null,
   overrideCenter:     false, 
@@ -35,7 +35,7 @@ $.extend(MapsLib, {
   searchPage:         MapsLib.searchPage || {},
   columns:            [],
   in_query:           false, 
-  searchRadius:       MapsLib.mapDefaultCenterZoom,
+  searchRadius:       MapsLib.defaultZoom,
   customSearchFilter: "",
   num_list_rows:      0, 
 
@@ -51,26 +51,44 @@ $.extend(MapsLib, {
       css.innerHTML = MapsLib.customCSS;
       document.head.appendChild(css);
     }
-    MapsLib.filterByDistance = !("addressFilter" in MapsLib.searchPage && 
-      "filterByDistance" in MapsLib.searchPage.addressFilter && MapsLib.searchPage.addressFilter.filterByDistance == false);
 
-    var maxDistText = MapsLib.useNearbyLocationIfWithin.toLowerCase();
-    if (maxDistText == "always")
+    // fill in defaults for searchPage settings
+    var searchPageDefaults = { allColumns: true, allColumnsExactMatch: false, searchByAddress: true,
+      distanceFilter: {}, dropDowns: [], columns: [] };
+    var distanceFilterDefaults = { filterSearchResults: true, filterListResults: true, dropDown: [] };
+    for (key in searchPageDefaults)
     {
-      MapsLib.maxDistanceFromDefaultCenter = -1;
+      if (!(key in MapsLib.searchPage)) MapsLib.searchPage[key] = searchPageDefaults[key];
     }
-    else if (maxDistText == "never")
+    for (key in distanceFilterDefaults)
     {
+      if (!(key in MapsLib.searchPage.distanceFilter)) MapsLib.searchPage.distanceFilter[key] = distanceFilterDefaults[key];
+    }
+
+    if (!("useNearbyLocation" in MapsLib))
+    {
+      MapsLib.useNearbyLocation = false;
       MapsLib.maxDistanceFromDefaultCenter = 0;
       $("#nearby-name").text("Home");
     }
-    else
+    else 
     {
-      var tokens = maxDistText.split(" ");
-      MapsLib.maxDistanceFromDefaultCenter = tokens[0]*1;
-      if (tokens[1] == "miles")
+      MapsLib.nearbyZoomThreshold = MapsLib.useNearbyLocation.snapToNearbyZoom;
+      if (MapsLib.nearbyZoomThreshold == true) MapsLib.nearbyZoomThreshold = 0;
+
+      if (!("onlyIfWithin" in MapsLib.useNearbyLocation))
       {
-        MapsLib.maxDistanceFromDefaultCenter *= 1610;
+        // always use default location
+        MapsLib.maxDistanceFromDefaultCenter = -1;
+      }
+      else
+      {
+        var tokens = MapsLib.useNearbyLocation.onlyIfWithin.toLowerCase().split(" ");
+        MapsLib.maxDistanceFromDefaultCenter = tokens[0]*1;
+        if (tokens[1] == "miles" || tokens[1] == "mile")
+        {
+          MapsLib.maxDistanceFromDefaultCenter *= 1610;
+        }
       }
     }
     MapsLib.getColumns("MapsLib.setColumns");
@@ -84,7 +102,7 @@ $.extend(MapsLib, {
 
     geocoder = new google.maps.Geocoder();
     var myOptions = {
-      zoom: MapsLib.mapDefaultCenterZoom,
+      zoom: MapsLib.defaultZoom,
       center: MapsLib.map_centroid,
       streetViewControl: false,
       panControl: false,
@@ -95,7 +113,10 @@ $.extend(MapsLib, {
     // hide map until we get current location (to avoid snapping)
     $("#map_canvas").css("visibility","hidden"); 
     MapsLib.map = new google.maps.Map($("#map_canvas")[0],myOptions);
-    MapsLib.map.setZoom(MapsLib.nearbyZoom);
+    if (MapsLib.useNearbyLocation && "nearbyZoom" in MapsLib.useNearbyLocation)
+    {
+      MapsLib.map.setZoom(MapsLib.useNearbyLocation.nearbyZoom);
+    }
     
     // add to list view when user scrolls to the bottom
     $(window).scroll(function() {
@@ -117,7 +138,7 @@ $.extend(MapsLib, {
       var useNearbyPosition = true;
 
       // don't follow user if maxDistanceFromDefaultCenter is 0
-      if (MapsLib.maxDistanceFromDefaultCenter == 0)
+      if (!MapsLib.useNearbyLocation || userPosition == null)
       {
         useNearbyPosition = false;
       }
@@ -131,9 +152,9 @@ $.extend(MapsLib, {
           if (dist > MapsLib.maxDistanceFromDefaultCenter)
           {
             useNearbyPosition = false;
-            if (MapsLib.stringExists(MapsLib.boundsExceededMessage))
+            if (MapsLib.stringExists(MapsLib.useNearbyLocation.boundsExceededMessage))
             {
-              $( "#boundsExceededMessageText" ).text(MapsLib.boundsExceededMessage);
+              $( "#boundsExceededMessageText" ).text(MapsLib.useNearbyLocation.boundsExceededMessage);
               $( "#popupDialog" ).popup( "open" );
             }
           }
@@ -143,7 +164,7 @@ $.extend(MapsLib, {
       {
         MapsLib.nearbyPosition = MapsLib.mapDefaultCenter;
         MapsLib.map.setCenter(MapsLib.nearbyPosition);
-        MapsLib.map.setZoom(MapsLib.mapDefaultCenterZoom);
+        MapsLib.map.setZoom(MapsLib.defaultZoom);
         MapsLib.map_centroid = MapsLib.nearbyPosition;
       }
       else
@@ -172,14 +193,6 @@ $.extend(MapsLib, {
             MapsLib.infoWindow.open(MapsLib.map);
           }); 
         }
-        if (MapsLib.searchRadiusCircle != null && MapsLib.searchRadiusCircle.getMap() != null)
-        {
-          // if radius circle is active, redraw it around new position
-          if (!MapsLib.filterByDistance)
-          {
-            MapsLib.drawSearchRadiusCircle(MapsLib.currentPinpoint);
-          }
-        }
       }
     }
 
@@ -200,13 +213,13 @@ $.extend(MapsLib, {
         }
         return false;
     }
-    if (MapsLib.maxDistanceFromDefaultCenter != 0)
+    if (MapsLib.useNearbyLocation && MapsLib.useNearbyLocation.startAtNearbyLocation)
     {
       getlocation();
     }
     else
     {
-      updateCenter();
+      updateCenter(null);
     }
     $("#map_canvas").css("visibility","visible"); 
 
@@ -215,7 +228,19 @@ $.extend(MapsLib, {
         //e.stopImmediatePropagation();
         //e.preventDefault();
         MapsLib.safeShow(MapsLib.addrMarker, false);
-        getlocation();
+        if (MapsLib.useNearbyLocation)
+        {
+          getlocation();
+        }
+        else
+        {
+          updateCenter();
+        }
+        var settings = MapsLib.useNearbyLocation;
+        if (MapsLib.nearbyZoomThreshold != -1 && (Math.abs(MapsLib.map.getZoom() - settings.nearbyZoom) >= MapsLib.nearbyZoomThreshold))
+        {
+          MapsLib.map.setZoom(settings.nearbyZoom);
+        }
         setTimeout("$('a#nearby').removeClass('ui-btn-active');", 500);
       }
     );
@@ -276,33 +301,29 @@ $.extend(MapsLib, {
   // See commentary above searchPage definition (in settings file) for data layout
   searchHtml: function() {
     var html = [];
-    var settings = MapsLib.searchPage || {};
-    var addressSearched = ("addressFilter" in settings);
-    if (addressSearched)
+    var settings = MapsLib.searchPage;
+    if (settings.searchByAddress)
     {
-        html = [
-          "<label for='search_address'>Address / Intersection:</label>",
-          "<input class='input-block-level' id='search_address' placeholder='defaults to current location' type='text' />"
-          ];
-        if ("distances" in settings.addressFilter && settings.addressFilter.distances.length > 0)
-        {
-          html.push("<hr><label for='search_radius'>Within:</label>");
-          html.push("<select class='input-small' id='search_radius'>");
-          var distances = settings.addressFilter.distances;
-          for (var i=0; i<distances.length; i++)
-          {
-            var distEntry = distances[i]; // format: [zoom, label, true if selected]
-            var selected = (distEntry.length > 2 && distEntry[2] == true) ? " selected='selected'" : "";
-            html.push("<option value='" + distEntry[0] + "'" + selected + ">" + distEntry[1] + "</option>");
-          }
-          html.push("</select>");
-        }
+      html.push("<label for='search_address'>Address / Intersection:</label>");
+      html.push("<input class='input-block-level' data-clear-btn='true' id='search_address' placeholder='defaults to current center' type='text' />");
+    }
+    if (settings.distanceFilter.dropDown.length > 0)
+    {
+      html.push("<hr><label for='search_radius'>Within:</label>");
+      html.push("<select class='input-small' id='search_radius'>");
+      var distances = settings.distanceFilter.dropDown;
+      for (var i=0; i<distances.length; i++)
+      {
+        var distEntry = distances[i]; // format: [zoom, label, true if selected]
+        var selected = (distEntry.length > 2 && distEntry[2] == true) ? " selected='selected'" : "";
+        html.push("<option value='" + distEntry[0] + "'" + selected + ">" + distEntry[1] + "</option>");
+      }
+      html.push("</select>");
     }
 
-    var dropdowns = ("dropDowns" in settings) ? settings.dropDowns : [];
-    for (var i=0; i<dropdowns.length; i++)
+    for (var i=0; i<settings.dropDowns.length; i++)
     {
-      var field = dropdowns[i];
+      var field = settings.dropDowns[i];
       var field_id = field.label.replace(" ","_");
       html.push("<hr><label for='sc_" + field_id + "'>" + field.label + ":</label>");
       html.push("<select data-ref='custom' id='sc_" + field_id + "' name=''>");
@@ -316,10 +337,8 @@ $.extend(MapsLib, {
       html.push("</select>");
     }
 
-    var exactMatchAll = ("allColumnsExactMatch" in settings);
-    var columns = ("columns" in settings) ? settings.columns : [];
-
-    if (exactMatchAll || !("allColumns" in settings && settings.allColumns == false))
+    var columns = settings.columns;
+    if (settings.allColumns || settings.allColumnsExactMatch)
     {
       var customColumns = [];
       for (var i=0; i<columns.length; i++)
@@ -332,7 +351,7 @@ $.extend(MapsLib, {
         var columnName = MapsLib.columns[i];
         if ($.inArray(columnName, ["latitude","longitude"]) >= 0) continue;
         // skip address field if addressSearched is true
-        if (addressSearched && $.inArray(columnName, ["address","city","state","postal_code"]) >= 0) continue;
+        if (MapsLib.searchPage.searchByAddress && $.inArray(columnName, ["address","city","state","postal_code"]) >= 0) continue;
         var cIndex = $.inArray(columnName, customColumns);
         if (cIndex >= 0)
         {
@@ -340,7 +359,7 @@ $.extend(MapsLib, {
         }
         else
         {
-          columns.push({column:columnName, label:columnName, exact_match:exactMatchAll});
+          columns.push({column:columnName, label:columnName, exact_match:settings.allColumnsExactMatch});
         }
       }
     }
@@ -350,7 +369,7 @@ $.extend(MapsLib, {
       var field = columns[i];
       var placeholder = field.exact_match ? "Exact match (case-sensitive)" : "Match anything containing this text";
       html.push("<hr><label for='sc_" + field.column + "'>" + field.label + ":</label>");
-      html.push("<input class='input-block-level' data-ref='column' data-field='" + 
+      html.push("<input class='input-block-level' data-clear-btn='true' data-ref='column' data-field='" + 
         field.column + "' data-exact='" + field.exact_match + "' id='sc_" + field.column + "' placeholder='" + 
         placeholder + "' type='text' />");
     }
@@ -452,7 +471,7 @@ $.extend(MapsLib, {
               MapsLib.infoWindow.open(MapsLib.map);
             }); 
           }
-          if (MapsLib.filterByDistance && MapsLib.searchRadius > 0)
+          if (MapsLib.searchPage.distanceFilter.filterSearchResults && MapsLib.searchRadius > 0)
           {
             whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadiusMeters() + "))";
             MapsLib.drawSearchRadiusCircle(MapsLib.currentPinpoint);
@@ -464,25 +483,22 @@ $.extend(MapsLib, {
         }
       });
     }
-    else if ("addressFilter" in MapsLib.searchPage && (typeof hideRadius == 'undefined' || hideRadius == false))
+    else if ((MapsLib.searchPage.distanceFilter.dropDown.length > 0 || MapsLib.searchPage.searchByAddress) && (typeof hideRadius == 'undefined' || hideRadius == false))
     {
       // search w/ current location
-      MapsLib.currentPinpoint = MapsLib.nearbyPosition;
+      MapsLib.currentPinpoint = MapsLib.map_centroid;
       MapsLib.safeShow(MapsLib.localMarker, true);
       MapsLib.safeShow(MapsLib.addrMarker, false);
-      MapsLib.map.setCenter(MapsLib.nearbyPosition);
-      MapsLib.map_centroid = MapsLib.nearbyPosition;
       if (MapsLib.searchRadius > 0)
       {
-        if (MapsLib.filterByDistance)
+        if (MapsLib.searchPage.distanceFilter.filterSearchResults)
         {
-          whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.nearbyPosition.toString() + "," + MapsLib.searchRadiusMeters() + "))";
-          MapsLib.drawSearchRadiusCircle(MapsLib.currentPinpoint);
+          whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.map_centroid.toString() + "," + MapsLib.searchRadiusMeters() + "))";
         }
         MapsLib.map.setZoom(MapsLib.searchRadius+zoomOffset-1);
-        MapsLib.drawSearchRadiusCircle(MapsLib.nearbyPosition);
+        MapsLib.drawSearchRadiusCircle(MapsLib.map_centroid);
       }
-      MapsLib.submitSearch(whereClause, MapsLib.map, MapsLib.nearbyPosition);
+      MapsLib.submitSearch(whereClause, MapsLib.map, MapsLib.map_centroid);
     }
     else
     {
@@ -642,7 +658,7 @@ $.extend(MapsLib, {
       if (MapsLib.customSearchFilter.length > 0) {
         whereClause += " AND " + MapsLib.customSearchFilter;
       }
-      if (MapsLib.currentPinpoint != null && MapsLib.searchRadius > 0 && MapsLib.filterByDistance) {
+      if (MapsLib.currentPinpoint != null && MapsLib.searchRadius > 0 && MapsLib.searchPage.distanceFilter.filterListResults) {
         whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.map.getCenter().toString() + "," + MapsLib.searchRadiusMeters() + "))";
         whereClause += " LIMIT " + (MapsLib.num_list_rows + 10);
       }
