@@ -74,18 +74,18 @@ $.extend(MapsLib, {
   ///////////////////////
 
   // Title bar (including title of website)
-  title: "Inspection Data",
+  title: "SF Food Inspections",
 
   aboutPage: " \
-    <h3>About Inspection Data</h3> \
+    <h3>About SF Food Inspections</h3> \
     <p>This is a demonstration of a Mobile Template using Fusion Tables.  Developed by SF Brigade for Code For America, it's an adaptation of Derek Eder's searchable Fusion Table template, licensed under the <a href='https://github.com/derekeder/FusionTable-Map-Template/wiki/License' target='_blank'>MIT License</a>.  This particular application uses health inspection data for businesses in San Francisco.</p> \
     <p>To use this template for your own Fusion Table data, <a href='https://github.com/sfbrigade/FusionTable-Map-MobileTemplate' target='_blank'>clone this repository</a> and replace the fields inside fusiontable_settings.js to match your content.</p> \
     ",
 
   // This will go in your style block.  Use this to format your infoboxes.
   customCSS: " \
-    .infobox-header, .ui-li-desc, #score-text { font-family: Arial, Helvetica, Geneva, sans-serif; } \
-    .infobox-container-map { width:220px; } \
+    .infobox-header, .ui-li-desc, #score-text { font-family: Arial, Helvetica, Geneva, sans-serif; white-space:normal;} \
+    .infobox-map { width:220px; } \
     .infobox-header { display:inline; padding-right: 10px; } \
     .infobox-subheader { padding-top: 5px; } \
     .moreinfo { margin-left:7px; min-width:18px; position:absolute; \
@@ -106,30 +106,31 @@ $.extend(MapsLib, {
   // Leave blank if you don't want infoboxes.
   infoboxTemplate: " \
           {{#if isListView}} \
-            <div class='infobox-container'> \
+            <div> \
           {{else}} \
-            <div class='infobox-container-map'> \
+            <div class='infobox-map'> \
           {{/if}} \
           <div class='score {{row.last_score_category}}'><span id='score-text'>{{row.last_score}}</span></div> \
           <h4 class='infobox-header'>{{row.name}}</h4> \
           <p class='ui-li-desc infobox-subheader'> \
-            <strong>Last inspected: {{row.last_inspection_date}}</strong></p> \
           {{#if isListView}} \
+            {{row.address}}</p> \
           {{else}} \
-            <p class='ui-li-desc'>{{row.address}} \
-              <br/><br/><b>Recent violations:</b> \
-              {{#if row.violation_1}} \
-                <br>-{{row.violation_1}} \
-              {{else}} \
-                None \
-              {{/if}} \
-              {{#if row.violation_2}} \
-                <br>-{{row.violation_2}} \
-              {{/if}} \
-              {{#if row.violation_3}} \
-                <br>-{{row.violation_3}} \
-              {{/if}} \
+            <strong>Last inspected: {{row.last_inspection_date}}</strong> \
+            <br>{{row.address}}</p> \
+            <p class='ui-li-desc infobox-subheader'><b>Recent violations:</b> \
+            {{#if row.violation_1}} \
+              <br>-{{row.violation_1}} \
+            {{else}} \
+              None \
             {{/if}} \
+            {{#if row.violation_2}} \
+              <br>-{{row.violation_2}} \
+            {{/if}} \
+            {{#if row.violation_3}} \
+              <br>-{{row.violation_3}} \
+            {{/if}} \
+          {{/if}} \
           </p></div>",
 
   // Infoboxes will also appear (unless blank) on your nearby or search address pins.

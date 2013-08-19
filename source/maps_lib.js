@@ -22,7 +22,9 @@ $.extend(MapsLib, {
   overrideCenter:     false, 
   ignoreIdle:         false,
 
-  // drawing
+  // markers
+  addrMarker:         null,
+  localMarker:        null,
   addrMarkerImage:    '//maps.google.com/intl/en_us/mapfiles/ms/micons/red-dot.png',
   blueDotImage:       '//maps.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png',
   currentPinpoint:    null,
@@ -30,14 +32,17 @@ $.extend(MapsLib, {
   // infoboxes
   infoWindow:         new google.maps.InfoWindow({}),
   infoboxCompiled:    null,
+  queueInfobox:       false,
+
 
   // search and list
   searchPage:         MapsLib.searchPage || {},
   columns:            [],
   in_query:           false, 
-  searchRadius:       MapsLib.defaultZoom,
+  searchRadius:       0,
   customSearchFilter: "",
-  num_list_rows:      0, 
+  listViewRows:       [],
+  selectedListRow:    null,
 
   stringExists: function(teststr) {
     return (typeof teststr != 'undefined' && teststr != null && teststr.length > 0);
@@ -120,10 +125,10 @@ $.extend(MapsLib, {
     
     // add to list view when user scrolls to the bottom
     $(window).scroll(function() {
-       if (MapsLib.num_list_rows == 0) return;
+       if (MapsLib.listViewRows.length == 0) return;
 
        var listHeight = $("#page-list").height();
-       if (MapsLib.num_list_rows == 10)
+       if (MapsLib.listViewRows.length == 10)
        {
           // HACK: the page-list height isn't properly updated the first time, so
           // hard-code 10 * max-height of cell
@@ -162,6 +167,7 @@ $.extend(MapsLib, {
       }
       if (!useNearbyPosition)
       {
+        MapsLib.currentPinpoint = MapsLib.mapDefaultCenter;
         MapsLib.nearbyPosition = MapsLib.mapDefaultCenter;
         MapsLib.map.setCenter(MapsLib.nearbyPosition);
         MapsLib.map.setZoom(MapsLib.defaultZoom);
@@ -169,6 +175,7 @@ $.extend(MapsLib, {
       }
       else
       {
+        MapsLib.currentPinpoint = MapsLib.nearbyPosition;
         MapsLib.map.setCenter(MapsLib.nearbyPosition);
         MapsLib.map_centroid = MapsLib.nearbyPosition;
         if (MapsLib.localMarker != null)
@@ -186,7 +193,7 @@ $.extend(MapsLib, {
         {
           google.maps.event.addListener(MapsLib.localMarker, 'click', function() {
             MapsLib.infoWindow.setOptions({
-              content: '<div id="infobox-container">' + MapsLib.nearbyPinInfobox + '</div>',
+              content: '<div class="infobox-container">' + MapsLib.nearbyPinInfobox + '</div>',
               position: MapsLib.nearbyPosition,
               pixelOffset: new google.maps.Size(0,-32)
             });
@@ -268,13 +275,6 @@ $.extend(MapsLib, {
 
     MapsLib.searchrecords = null;
 
-    //reset filters
-    $("#search_address").val(MapsLib.convertToPlainString($.address.parameter('address')));
-    var loadRadius = MapsLib.convertToPlainString($.address.parameter('radius'));
-    if (loadRadius != "") $("#search_radius").val(loadRadius);
-    else $("#search_radius").val(MapsLib.searchRadius);
-    $(":checkbox").attr("checked", "checked");
-
     //-----custom initializers-------
     //-----end of custom initializers-------
   },
@@ -291,9 +291,20 @@ $.extend(MapsLib, {
     {
       MapsLib.ignoreIdle = false;
       google.maps.event.trigger(MapsLib.map, 'resize');
-      // returning from list view sometimes triggers an additional idle call before map.getCenter() is ready
-      MapsLib.overrideCenter = true;
-      setTimeout("MapsLib.overrideCenter = false", 500);
+
+      if (MapsLib.queueInfobox)
+      {
+        MapsLib.queueInfobox = false;
+        MapsLib.map_centroid = MapsLib.infoWindow.location;
+        MapsLib.map.setCenter(MapsLib.map_centroid);
+        MapsLib.infoWindow.open(MapsLib.map);
+      }
+      else
+      {    
+        // returning from list view sometimes triggers an additional idle call before map.getCenter() is ready
+        MapsLib.overrideCenter = true;
+        setTimeout("MapsLib.overrideCenter = false", 500);
+      }
     }
   },
 
@@ -382,7 +393,7 @@ $.extend(MapsLib, {
 
     //-----custom filters-------
     var address = $("#search_address").val();
-    MapsLib.searchRadius = $("#search_radius").val()*1;
+    MapsLib.searchRadius = (hideRadius == true) ? 0 : $("#search_radius").val()*1;
     // HACK: search radius was calibrated for min(width,height)=320, so we offset the zoom accordingly
     var min_diameter = Math.min($(document).width(),$(document).height());
     var zoomOffset = Math.round(Math.log(min_diameter/320)/Math.LN2);
@@ -439,11 +450,6 @@ $.extend(MapsLib, {
         if (status == google.maps.GeocoderStatus.OK) {
           MapsLib.currentPinpoint = results[0].geometry.location;
 
-          // -------- issues -------
-          // Below source code sets in query strings for the search; Temporarily commented this out as it causes page load error; The query string is used for parsing out search parameters, please see method "convertToPlainString"
-          // $.address.parameter('address', encodeURIComponent(address));
-          // $.address.parameter('radius', encodeURIComponent(MapsLib.searchRadius));
-
           MapsLib.map.setCenter(MapsLib.currentPinpoint);
           MapsLib.map_centroid = MapsLib.currentPinpoint;
           if (MapsLib.searchRadius > 0)
@@ -464,7 +470,7 @@ $.extend(MapsLib, {
           {
             google.maps.event.addListener(MapsLib.addrMarker, 'click', function() {
               MapsLib.infoWindow.setOptions({
-                content: '<div id="infobox-container">' + MapsLib.addressPinInfobox.replace("{address}",shortAddress) + '</div>',
+                content: '<div class="infobox-container">' + MapsLib.addressPinInfobox.replace("{address}",shortAddress) + '</div>',
                 position: MapsLib.currentPinpoint,
                 pixelOffset: new google.maps.Size(0,-32)
               });
@@ -508,7 +514,7 @@ $.extend(MapsLib, {
   },
 
   safeShow: function(testobj, visible) {
-    if (typeof testobj != 'undefined')
+    if (testobj != null)
     {
       testobj.setVisible(visible);
     }
@@ -523,7 +529,8 @@ $.extend(MapsLib, {
       extracted_row[key] = row[key].value;
     }
 
-    return MapsLib.infoboxCompiled({isListView: isListView ? "true" : "", row: extracted_row});
+    var compiled = MapsLib.infoboxCompiled({isListView: isListView ? "true" : "", row: extracted_row});
+    return '<div class="infobox-container">' + compiled + '</div>';
   },
 
   submitSearch: function(whereClause, map, location) {
@@ -549,8 +556,9 @@ $.extend(MapsLib, {
             // NOTE: Google's InfoWindow API currently provides no way to shorten the tail,
             // which is problematic when viewing on a mobile device in landscape mode
 
+            if (typeof e == 'undefined' || e == null) e = {};
             MapsLib.infoWindow.setOptions({
-              content: MapsLib.infoboxHTMLHelper((typeof e == 'undefined') ? {} : e.row),
+              content: MapsLib.infoboxHTMLHelper(e.row),
               position: e.latLng,
               pixelOffset: e.pixelOffset
             });
@@ -648,7 +656,7 @@ $.extend(MapsLib, {
   },
 
   getListView: function() {
-      MapsLib.num_list_rows = 0;
+      MapsLib.listViewRows = [];
       MapsLib.updateListView();
   },
 
@@ -658,21 +666,28 @@ $.extend(MapsLib, {
       if (MapsLib.customSearchFilter.length > 0) {
         whereClause += " AND " + MapsLib.customSearchFilter;
       }
-      if (MapsLib.currentPinpoint != null && MapsLib.searchRadius > 0 && MapsLib.searchPage.distanceFilter.filterListResults) {
-        whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.map.getCenter().toString() + "," + MapsLib.searchRadiusMeters() + "))";
-        whereClause += " LIMIT " + (MapsLib.num_list_rows + 10);
+      // HACK: all we really want is the 10 rows that come after the existing MapsLib.listViewRows.
+      //  but there's no way to get rows x to x+10 without also querying all the rows up to it.
+      var limitClause = " LIMIT " + (MapsLib.listViewRows.length + 10);
+      var centerPoint = (MapsLib.currentPinpoint != null) ? MapsLib.currentPinpoint : MapsLib.map.getCenter();
+
+      if (centerPoint == null)
+      {
+        whereClause += limitClause;
+      }
+      else if (MapsLib.searchRadius > 0 && MapsLib.searchPage.distanceFilter.filterListResults)
+      {
+        whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + centerPoint.toString() + "," + MapsLib.searchRadiusMeters() + "))";
+        whereClause += limitClause;
       }
       else
       {
         // FusionTable query limitation: There can at most be one spatial condition or "order by distance" condition.  We can't do both.
-        // HACK: all we really want is the 10 rows that come after the existing MapsLib.num_list_rows.
-        //  but there's no way to get rows x to x+10 without also querying all the rows up to it.
-        var centerPoint = (MapsLib.currentPinpoint != null) ? MapsLib.currentPinpoint : MapsLib.map.getCenter();
         orderClause = "ST_DISTANCE(" + MapsLib.locationColumn + ", LATLNG" + centerPoint.toString() + ")";
-        orderClause += " LIMIT " + (MapsLib.num_list_rows + 10);
+        orderClause += limitClause;
       }
 
-      if (MapsLib.num_list_rows == 0)
+      if (MapsLib.listViewRows.length == 0)
       {
         $("ul#listview").html('<li data-corners="false" data-shadow="false" data-iconshadow="true" data-theme="d">Loading results...</li>');
       }
@@ -686,7 +701,7 @@ $.extend(MapsLib, {
           return false;
       }
       // Empty the listview object.
-      var existingRows = MapsLib.num_list_rows;
+      var existingRows = MapsLib.listViewRows.length;
       if (existingRows == 0)
       {
         $("ul#listview").html("");
@@ -700,14 +715,33 @@ $.extend(MapsLib, {
           for (var jx=0; jx<json.columns.length; jx++) {
               row[ json.columns[jx] ] = {"value" : json.rows[ix][jx]};
           }
+          MapsLib.listViewRows.push(row);
 
-          var row_html = '<li data-corners="false" data-shadow="false" data-iconshadow="true" data-wrapperels="div" data-icon="arrow-r" data-iconpos="right" data-theme="d" class="ui-btn ui-btn-icon-right ui-li-has-arrow ui-li ui-btn-up-d"><div class="ui-btn-inner ui-li"><div class="ui-btn-text"><a href="todo.html" data-transition="slidedown" class="ui-link-inherit">';
+          var row_html = '<li data-corners="false" data-shadow="false" data-iconshadow="true" data-wrapperels="div" data-icon="arrow-r" data-iconpos="right" data-theme="d" class="ui-btn ui-btn-icon-right ui-li-has-arrow ui-li ui-btn-up-d"><div class="ui-btn-inner ui-li"><div class="ui-btn-text"><a href="#page-map" id="listrow-' + ix + '" data-transition="slidedown" class="ui-link-inherit">';
           row_html += MapsLib.infoboxHTMLHelper(row, true);
           row_html += '</a></div><span class="ui-icon ui-icon-arrow-r ui-icon-shadow">&nbsp;</span></div></li>';
 
           $("ul#listview").append(row_html);
+
+          $("a#listrow-" + ix).click(function(e) { 
+            var index = e.currentTarget.id.split("-")[1]*1;
+            MapsLib.selectedListRow = MapsLib.listViewRows[index];
+            if (MapsLib.selectedListRow != undefined)
+            {
+              var thispos = new google.maps.LatLng(MapsLib.selectedListRow.latitude.value, MapsLib.selectedListRow.longitude.value);
+              
+              var row = MapsLib.selectedListRow;
+              MapsLib.infoWindow.close();
+              MapsLib.infoWindow.setOptions({
+                  content: MapsLib.infoboxHTMLHelper(row, false),
+                  position: new google.maps.LatLng(row.latitude.value, row.longitude.value),
+                  pixelOffset: new google.maps.Size(0,-32)
+                });
+              MapsLib.queueInfobox = true;
+              MapsLib.reCenterWhenReady();
+            }
+          });
       }
-      MapsLib.num_list_rows += numRows;
   },
 
   //converts a slug or query string in to readable text
