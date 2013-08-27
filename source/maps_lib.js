@@ -102,40 +102,8 @@ $.extend(MapsLib, {
       }
     }
     MapsLib.getColumns("MapsLib.setColumns");
-    // from http://doginthehat.com.au/2012/02/comparison-block-helper-for-handlebars-templates/
     if (MapsLib.stringExists(MapsLib.customInfoboxTemplate))
     {
-      Handlebars.registerHelper('compare', function(lvalue, rvalue, options) {
-
-        if (arguments.length < 3)
-            throw new Error("Handlerbars Helper 'compare' needs 2 parameters");
-
-        operator = options.hash.operator || "==";
-
-        var operators = {
-            '==':       function(l,r) { return l == r; },
-            '===':      function(l,r) { return l === r; },
-            '!=':       function(l,r) { return l != r; },
-            '<':        function(l,r) { return l < r; },
-            '>':        function(l,r) { return l > r; },
-            '<=':       function(l,r) { return l <= r; },
-            '>=':       function(l,r) { return l >= r; },
-            'typeof':   function(l,r) { return typeof l == r; },
-            'startswith':   function(l,r) { return l.indexOf(r) == 0; },
-            'contains':   function(l,r) { return l.indexOf(r) != -1; }
-        }
-
-        if (!operators[operator])
-            throw new Error("Handlerbars Helper 'compare' doesn't know the operator " + operator);
-
-        var result = operators[operator](lvalue,rvalue);
-
-        if( result ) {
-            return options.fn(this);
-        } else {
-            return options.inverse(this);
-        }
-      });
       MapsLib.infoboxCompiled = Handlebars.compile(MapsLib.customInfoboxTemplate);
     }
     document.title = MapsLib.title;
@@ -795,7 +763,7 @@ $.extend(MapsLib, {
         $("ul#listview").html("");
       }
 
-      var numRows = json.rows.length;
+      var numRows = (json != undefined && json.rows != undefined) ? json.rows.length : 0;
       // we already have the first existingRows, we're just appending the remainder
       for (var ix=existingRows; ix<numRows; ix++){
           // make row object.

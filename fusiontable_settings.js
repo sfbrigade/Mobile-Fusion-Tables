@@ -31,10 +31,9 @@ $.extend(MapsLib, {
   // *Important* this key is for demonstration purposes. please register your own.
   googleApiKey:       "AIzaSyAMVBSXes-6P-gWaxRj20GK8NT6WDVpozM",
 
-  // Name of the location column in your Fusion Table.
-  // NOTE 1: if your location column name has spaces in it, surround it with single quotes
-  // NOTE 2: if you have "latitude" and "longitude" columns, just use "latitude"
-  locationColumn:     "Address",
+  // Override the location column in your Fusion Table (useful if you have multiple columns)
+  // NOTE: if you have "latitude" and "longitude" columns, just use "latitude"
+  //locationColumn:     "Address",
   
 
   ////////////////////////
@@ -91,9 +90,13 @@ $.extend(MapsLib, {
     .moreinfo { margin-left:7px; min-width:18px; position:absolute; \
         top:45%; bottom:45%; min-height:18px; } \
     .entity { float:left; font-size:medium; padding:5px; border:1px solid black; margin:2px 7px 5px 0px; } \
-    .entity.blue_box { background-color: #0060ed; color: white; } \
-    .entity.red_box { background-color: #fb6155; color: white; } \
+    .entity.blue_box { display: none; background-color: #0060ed; color: white; } \
+    .entity.red_box { display: none; background-color: #fb6155; color: white; } \
     .entity.orange_box { background-color: #ff9c00; color: white; } \
+    .entity.blue_box.Government { display: inherit; } \
+    .entity.red_box.Corporate { display: inherit; } \
+    .entity.orange_box.Government { display: none; } \
+    .entity.orange_box.Corporate { display: none; } \
   ",
 
 
@@ -113,15 +116,9 @@ $.extend(MapsLib, {
           {{else}} \
             <div class="infobox-map"> \
           {{/if}} \
-          {{#compare row.Grantee_Organization_Type_Description "U.S. Government Entity" operator="=="}} \
-            <div class="entity blue_box"><span id="entity-text">.gov</span></div> \
-          {{else}} \
-            {{#compare row.Grantee_Organization_Type_Description "Corporate Entity, Federal Tax Exempt" operator="=="}} \
-              <div class="entity red_box"><span id="entity-text">.com</span></div> \
-            {{else}} \
-              <div class="entity orange_box"><span id="entity-text">.org</span></div> \
-            {{/compare}} \
-          {{/compare}} \
+          <div class="entity blue_box {{row.Grantee_Organization_Type_Description}}"><span id="entity-text">.gov</span></div> \
+          <div class="entity red_box {{row.Grantee_Organization_Type_Description}}"><span id="entity-text">.com</span></div> \
+          <div class="entity orange_box {{row.Grantee_Organization_Type_Description}}"><span id="entity-text">.org</span></div> \
           <h4 class="infobox-header">{{row.Name}}</h4> \
           {{#if isListView}} \
             <p class="ui-li-desc infobox-subheader"> \
@@ -132,11 +129,7 @@ $.extend(MapsLib, {
             {{row.Grantee_Organization_Type_Description}}<br> \
             {{row.Address}}<br> \
             {{#if row.URL}} \
-              {{#compare row.URL "http://" operator="startswith"}} \
-                <a href="{{row.URL}}" target="_blank">{{row.URL}}</a><br> \
-              {{else}} \
-                <a href="http://{{row.URL}}" target="_blank">{{row.URL}}</a><br> \
-              {{/compare}} \
+              <a href="{{row.URL}}" target="_blank">{{row.URL}}</a><br> \
             {{/if}} \
             <a href="tel:1{{row.Telephone_Number}}">{{row.Telephone_Number}}</a></p> \
           {{/if}} \
