@@ -120,15 +120,15 @@ $.extend(MapsLib, {
             <br>{{row.address}}</p> \
             <p class='ui-li-desc infobox-subheader'><b>Recent violations:</b> \
             {{#if row.violation_1}} \
-              <br>-{{row.violation_1}} \
+              <br>- {{row.violation_1}} \
             {{else}} \
               None \
             {{/if}} \
             {{#if row.violation_2}} \
-              <br>-{{row.violation_2}} \
+              <br>- {{row.violation_2}} \
             {{/if}} \
             {{#if row.violation_3}} \
-              <br>-{{row.violation_3}} \
+              <br>- {{row.violation_3}} \
             {{/if}} \
           {{/if}} \
           </p></div>",
