@@ -31,10 +31,9 @@ $.extend(MapsLib, {
   // *Important* this key is for demonstration purposes. please register your own.
   googleApiKey:       "AIzaSyAMVBSXes-6P-gWaxRj20GK8NT6WDVpozM",
 
-  // Name of the location column in your Fusion Table.
-  // NOTE 1: if your location column name has spaces in it, surround it with single quotes
-  // NOTE 2: if you have "latitude" and "longitude" columns, just use "latitude"
-  locationColumn:     "Address",
+  // Override the location column in your Fusion Table (useful if you have multiple columns)
+  // NOTE: if you have "latitude" and "longitude" columns, just use "latitude"
+  //locationColumn:     "Address",
   
 
   ////////////////////////

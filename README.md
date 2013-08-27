@@ -3,7 +3,10 @@ Mobile Fusion Table
 
 This is a mobile-ready template using Google Maps and Fusion Tables, based on Derek Eder's [Fusion Table Searchable Map Template](https://github.com/derekeder/FusionTable-Map-Template).
 
-To use this template for your own Fusion Table data, clone this repository and replace the fields inside fusiontable_settings.js to match your content.
+**To use this template for your own Fusion Table data:**
+
+1. Clone this repository.
+2. Replace the fields inside fusiontable_settings.js to match your content.  (See the 'samples' folder for more examples.)
 
 Here's what the main (map) page looks like.  You can customize the contents of the infobox using Handlebars.
 
