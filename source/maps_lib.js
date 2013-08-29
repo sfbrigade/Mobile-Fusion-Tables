@@ -53,6 +53,14 @@ $.extend(MapsLib, {
     return (typeof teststr != 'undefined' && teststr != null && teststr.length > 0);
   },
 
+  updateTitle: function() {
+    if (typeof MapsLib.title != 'undefined' && MapsLib.title != undefined)
+    {
+      document.title = MapsLib.title;
+      $("#titlebar").text(MapsLib.title);
+    }
+  },
+
   initialize: function() {
     if (MapsLib.stringExists(MapsLib.customCSS))
     {
@@ -106,8 +114,7 @@ $.extend(MapsLib, {
     {
       MapsLib.infoboxCompiled = Handlebars.compile(MapsLib.customInfoboxTemplate);
     }
-    document.title = MapsLib.title;
-    $("#titlebar").text(MapsLib.title);
+    MapsLib.updateTitle();
     $("#section-about").html(MapsLib.aboutPage);
 
     geocoder = new google.maps.Geocoder();
@@ -642,7 +649,7 @@ $.extend(MapsLib, {
   },
 
   getColumns: function(callback) {
-    var qstr = "https://www.googleapis.com/fusiontables/v1/tables/" + MapsLib.fusionTableId + "/columns?callback=" + callback + "&key=" + MapsLib.googleApiKey;
+    var qstr = "https://www.googleapis.com/fusiontables/v1/tables/" + MapsLib.fusionTableId + "?callback=" + callback + "&key=" + MapsLib.googleApiKey;
     $.ajax({url: qstr, dataType: "jsonp"});
   },
 
@@ -687,13 +694,18 @@ $.extend(MapsLib, {
     if (MapsLib.handleError(json)) {
         return false;
     }
+    if (typeof MapsLib.title == 'undefined' || MapsLib.title == undefined)
+    {
+      MapsLib.title = json["name"];
+      MapsLib.updateTitle();
+    }
     var all_columns = [];
-    var num_columns = json["items"].length;
+    var num_columns = json["columns"].length;
     for (var i = 0; i < num_columns; i++)
     {
-      var name = json["items"][i]["name"];
+      var name = json["columns"][i]["name"];
       all_columns.push(name);
-      if (MapsLib.locationColumn == "" && json["items"][i]["type"] == "LOCATION")
+      if (MapsLib.locationColumn == "" && json["columns"][i]["type"] == "LOCATION")
       {
         MapsLib.locationColumn = name;
       }
