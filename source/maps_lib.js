@@ -14,7 +14,7 @@ var MapsLib = MapsLib || {};
 $.extend(MapsLib, {
   // map and positions
   map:                null, // gets initialized below
-  map_centroid:       MapsLib.mapDefaultCenter,
+  map_centroid:       null, // gets initialized below
   maxDistanceFromDefaultCenter: 0,
   nearbyZoomThreshold:-1,
   searchRadiusCircle: null,
@@ -29,12 +29,21 @@ $.extend(MapsLib, {
   addrMarkerImage:    '//maps.google.com/intl/en_us/mapfiles/ms/micons/red-dot.png',
   blueDotImage:       '//maps.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png',
   currentPinpoint:    null,
+  defaultPixelOffset: new google.maps.Size(0,-30),
 
   // infoboxes
   infoWindow:         new google.maps.InfoWindow({}),
   infoboxCompiled:    null,
   queueInfobox:       false,
+  nearbyPinInfobox:   MapsLib.nearbyPinInfobox || "You are here.",
+  addressPinInfobox:  MapsLib.addressPinInfobox || "{address}",
 
+  // about
+  defaultAboutPage:   " \
+    <h3>About {title}</h3> \
+    <p>This is a demonstration of a Mobile Template using Fusion Tables.  Developed by SF Brigade for Code For America, it's an adaptation of Derek Eder's searchable Fusion Table template, licensed under the <a href='https://github.com/derekeder/FusionTable-Map-Template/wiki/License' target='_blank'>MIT License</a>.</p> \
+    <p>To use this template for your own Fusion Table data, <a href='https://github.com/sfbrigade/FusionTable-Map-MobileTemplate' target='_blank'>clone this repository</a> and replace the fields inside fusiontable_settings.js to match your content.</p> \
+    ",
 
   // search and list
   searchPage:         MapsLib.searchPage || {},
@@ -54,11 +63,22 @@ $.extend(MapsLib, {
   },
 
   updateTitle: function() {
+    var aboutContent = MapsLib.default(MapsLib.defaultAboutPage, MapsLib.aboutPage);
     if (typeof MapsLib.title != 'undefined' && MapsLib.title != undefined)
     {
       document.title = MapsLib.title;
       $("#titlebar").text(MapsLib.title);
+      $("#section-about").html(aboutContent.replace("{title}",MapsLib.title));
     }
+    else
+    {
+      $("#section-about").html(aboutContent);
+    }
+  },
+
+  default: function(defaultval, obj)
+  {
+    return (typeof obj == 'undefined' || obj == undefined) ? defaultval : obj;
   },
 
   initialize: function() {
@@ -69,6 +89,17 @@ $.extend(MapsLib, {
       css.innerHTML = MapsLib.customCSS;
       document.head.appendChild(css);
     }
+
+    // fill in defaults for map settings
+    MapsLib.mapDefaultCenter = MapsLib.default(new google.maps.LatLng(37.77, -122.45), MapsLib.mapDefaultCenter); // center on SF if all else fails
+    MapsLib.map_centroid = MapsLib.mapDefaultCenter;
+    MapsLib.defaultZoom = MapsLib.default(11, MapsLib.defaultZoom);
+    MapsLib.useNearbyLocation = MapsLib.default({}, MapsLib.useNearbyLocation);
+    MapsLib.useNearbyLocation.startAtNearbyLocation = MapsLib.default(true, MapsLib.useNearbyLocation.startAtNearbyLocation);
+    // MapsLib.useNearbyLocation.onlyIfWithin: leave undefined
+    MapsLib.useNearbyLocation.boundsExceededMessage = MapsLib.default("You're currently outside the furthest data point from center.  Defaulting to geographical center of data.", MapsLib.useNearbyLocation.boundsExceededMessage);
+    MapsLib.useNearbyLocation.nearbyZoom = MapsLib.default(MapsLib.defaultZoom + 5, MapsLib.useNearbyLocation.nearbyZoom); 
+    MapsLib.useNearbyLocation.snapToNearbyZoom = MapsLib.default(3, MapsLib.useNearbyLocation.snapToNearbyZoom);
 
     // fill in defaults for searchPage settings
     var searchPageDefaults = { allColumns: true, allColumnsExactMatch: false, searchByAddress: true,
@@ -83,7 +114,7 @@ $.extend(MapsLib, {
       if (!(key in MapsLib.searchPage.distanceFilter)) MapsLib.searchPage.distanceFilter[key] = distanceFilterDefaults[key];
     }
 
-    if (!("useNearbyLocation" in MapsLib))
+    if (MapsLib.useNearbyLocation == false)
     {
       MapsLib.useNearbyLocation = false;
       MapsLib.maxDistanceFromDefaultCenter = 0;
@@ -109,13 +140,17 @@ $.extend(MapsLib, {
         }
       }
     }
-    MapsLib.getColumns("MapsLib.setColumns");
+
+    // request list of columns
+    var qstr = "https://www.googleapis.com/fusiontables/v1/tables/" + MapsLib.fusionTableId + "?callback=MapsLib.setColumns&key=" + MapsLib.googleApiKey;
+    console.log("Query: " + qstr);
+    $.ajax({url: qstr, dataType: "jsonp"});
+
     if (MapsLib.stringExists(MapsLib.customInfoboxTemplate))
     {
       MapsLib.infoboxCompiled = Handlebars.compile(MapsLib.customInfoboxTemplate);
     }
     MapsLib.updateTitle();
-    $("#section-about").html(MapsLib.aboutPage);
 
     geocoder = new google.maps.Geocoder();
     var myOptions = {
@@ -447,7 +482,7 @@ $.extend(MapsLib, {
     if (address != "" && address != undefined) {
         // search w/ specified address
         var shortAddress = address;
-        if (MapsLib.addressScope != null && MapsLib.addressScope.replace(" ","") != "")
+        if (MapsLib.addressScope != undefined && MapsLib.addressScope.replace(" ","") != "")
         {
           // append or replace tail of address with location scope (using commas as scope boundaries)
           var numCommas = (address.split(",").length - MapsLib.addressScope.split(",").length);
@@ -505,7 +540,7 @@ $.extend(MapsLib, {
         }
       });
     }
-    else if ((MapsLib.searchPage.distanceFilter.dropDown.length > 0 || MapsLib.searchPage.searchByAddress) && (typeof hideRadius == 'undefined' || hideRadius == false))
+    else if ((MapsLib.searchPage.distanceFilter.dropDown.length > 0 || MapsLib.searchPage.searchByAddress) && (typeof hideRadius == 'undefined' || hideRadius == false) && MapsLib.map_centroid != undefined)
     {
       // search w/ current location
       MapsLib.currentPinpoint = MapsLib.map_centroid;
@@ -536,7 +571,7 @@ $.extend(MapsLib, {
     }
   },
 
-  infoboxContent: function(row, isListView) {
+  infoboxContent: function(row, isListView, defaultContent) {
     if (typeof row == 'undefined' || row == null)
     {
       return null;
@@ -559,22 +594,29 @@ $.extend(MapsLib, {
     }
     else if (isListView || MapsLib.customInfoboxTemplate != "")
     {
-      // fall back on Fusion Table's infobox?
-      // infoboxContent = e.infoWindowHtml;
-      // Unfortunately, we don't have a way of getting the true infobox content-
-      //   e.infoWindowHtml is the default format and doesn't have any user customizations from the Fusion Table app.
-      // Instead, we regenerate one and ignore location column and empty values.
-      infoboxContent = isListView ? '<div class="infobox-container">' : '<div class="googft-info-window">';
-      infoboxContent += '<p class="infobox-default">';
-      for (var col in safe_row)
+      if ((typeof defaultContent != 'undefined' || defaultContent != undefined) &&
+        defaultContent.indexOf("geometry:") == -1)  // no geometry information in the infobox
       {
-        var val = safe_row[col];
-        if (val == null || val == "") continue;
-        if (col == MapsLib.locationColumn) continue;
-        if (col == "longitude") continue; // HACK: latitude implies there's also a longitude column
-        infoboxContent += "<b>" + col + ":</b> " + val + "<br/>";
+        infoboxContent = defaultContent;
       }
-      infoboxContent += "</p></div>";
+      else
+      {
+        // Generate one infoboxContent, ignoring location column and empty values.
+        infoboxContent = isListView ? '<div class="infobox-container">' : '<div class="googft-info-window">';
+        infoboxContent += '<p class="infobox-default">';
+        var limit = 4; // limit 4 lines per entry
+        var ix = 0;
+        for (var col in safe_row)
+        {
+          var val = safe_row[col];
+          if (val == null || val == "") continue;
+          if (col == MapsLib.locationColumn) continue;
+          if (col == "longitude") continue; // HACK: latitude implies there's also a longitude column
+          infoboxContent += "<b>" + col + ":</b> " + val + "<br/>";
+          if (++ix >= limit) break;
+        }
+        infoboxContent += "</p></div>";
+      }
     }
     return infoboxContent;
   },
@@ -602,8 +644,9 @@ $.extend(MapsLib, {
       // which is problematic when viewing on a mobile device in landscape mode
 
       if (typeof e == 'undefined' || e == null) e = {};
+      MapsLib.defaultPixelOffset = e.pixelOffset;
       MapsLib.infoWindow.setOptions({
-        content: MapsLib.infoboxContent(e.row, false),
+        content: MapsLib.infoboxContent(e.row, false, e.infoWindowHtml),
         position: e.latLng,
         pixelOffset: e.pixelOffset
       });
@@ -646,11 +689,6 @@ $.extend(MapsLib, {
       radius: MapsLib.searchRadiusMeters()
     };
     MapsLib.searchRadiusCircle = new google.maps.Circle(circleOptions);
-  },
-
-  getColumns: function(callback) {
-    var qstr = "https://www.googleapis.com/fusiontables/v1/tables/" + MapsLib.fusionTableId + "?callback=" + callback + "&key=" + MapsLib.googleApiKey;
-    $.ajax({url: qstr, dataType: "jsonp"});
   },
 
   query: function(selectColumns, whereClause, orderClause, callback) {
@@ -699,6 +737,12 @@ $.extend(MapsLib, {
       MapsLib.title = json["name"];
       MapsLib.updateTitle();
     }
+
+    if (MapsLib.aboutPage == undefined && json["description"].length > 0)
+    {
+      $("#section-about").html(json["description"].replace(/\n/g,"<br/>"));
+    }
+
     var all_columns = [];
     var num_columns = json["columns"].length;
     for (var i = 0; i < num_columns; i++)
@@ -803,19 +847,24 @@ $.extend(MapsLib, {
                 MapsLib.infoWindow.setOptions({
                     content: MapsLib.infoboxContent(row, false),
                     position: new google.maps.LatLng(row.latitude.value, row.longitude.value),
-                    pixelOffset: new google.maps.Size(0,-32)
+                    pixelOffset: MapsLib.defaultPixelOffset
                   });
                 MapsLib.queueInfobox = true;
                 MapsLib.reCenterWhenReady();
               }
               else if (MapsLib.locationColumn.toLowerCase() == "geometry")
               {
-                // HACK: can't seem to get a center point if map uses "geometry" polygons.  Just grab a corner instead...
+                // HACK: can't seem to get a center point if map uses "geometry" polygons.  Just grab a corner instead.
+                // There's a number of ways to get lng/lat from a geo (can be a point, a line, a polygon).
                 var geo = row[MapsLib.locationColumn].value;
-                var lnglat = ("geometries" in geo) ? geo.geometries[0].coordinates[0][0] : geo.geometry.coordinates[0];
+                var lnglat = ("geometries" in geo) ? geo.geometries[0].coordinates : geo.geometry.coordinates;
+                while (lnglat[0] instanceof Array)
+                {
+                  lnglat = lnglat[0];
+                }
                 MapsLib.infoWindow.setOptions({
                     content: MapsLib.infoboxContent(row, false),
-                    position: new google.maps.LatLng(lnglat[1], lnglat[0]),
+                    position: new google.maps.LatLng(lnglat[1], lnglat[0])
                   });
                 MapsLib.queueInfobox = true;
                 MapsLib.reCenterWhenReady();
@@ -829,7 +878,8 @@ $.extend(MapsLib, {
                   var thispos = results[0].geometry.location;
                   MapsLib.infoWindow.setOptions({
                       content: MapsLib.infoboxContent(MapsLib.selectedListRow, false),
-                      position: new google.maps.LatLng(thispos.lat(), thispos.lng())
+                      position: new google.maps.LatLng(thispos.lat(), thispos.lng()),
+                      pixelOffset: MapsLib.defaultPixelOffset
                     });
                   MapsLib.queueInfobox = true;
                   MapsLib.reCenterWhenReady();
