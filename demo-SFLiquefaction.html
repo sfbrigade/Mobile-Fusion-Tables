@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<!-- 
+  To customize this page for your own data, open fusiontable_settings.js and follow instructions.
+  You should not have to touch this file.
+-->
+
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for Mac OS X (vers 31 October 2006 - Apple Inc. build 15.10), see www.w3.org">
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png"/>
+  <link rel="icon" type="image/png" href="favicon.ico"/>
+
+  <title>Mobile Fusion Table</title>
+  <link rel="stylesheet" href="source/jquery.mobile-1.3.1.css" type="text/css"/>
+
+  <script type="text/javascript" src="source/jquery-1.7.2.min.js"></script>
+  <script type="text/javascript" src="source/jquery.mobile-1.3.1.js"></script> <!-- this must come after jquery -->
+  <script type="text/javascript" src="source/jquery.geocomplete.min.js"></script>
+  <script type="text/javascript" src="source/handlebars.js"></script>
+  <script type="text/javascript" src="source/jquery.address.min.js"></script>
+  <script type="text/javascript" src="https://maps.google.com/maps/api/js?sensor=false&amp;libraries=places,geometry"></script>
+
+  <script type="text/javascript" src="source/maps_lib.js"></script>
+  <script type="text/javascript" src="samples/fusiontable_settings.SFLiquefaction.js"></script>
+
+  <style type="text/css">
+            .infobox-container {
+              overflow:hidden;
+              position:relative;
+              font-weight:normal;
+            }
+
+            .infobox-default {
+              display:inline;
+              font-family: Arial, Helvetica, Geneva, sans-serif;
+              white-space:normal;
+            }
+
+            /* using hr as spacer between search fields */
+            hr { 
+              display: block; height: 8px;
+              border: 0; margin: 0; padding: 0;
+            }
+
+            #map_content {
+              padding: 0;
+              width: 100%;
+              height: 100%;
+              overflow: hidden;
+            }
+
+            #map_canvas {
+              padding: 0;
+              text-shadow: none;
+            }
+
+            #black {
+              background-color: #000;
+            }
+            
+            /* custom icons */
+            .ui-icon-location {
+              background-image: url(source/images/icons-18-white-location.png);
+              background-repeat: no-repeat;
+            }
+  </style>
+</head>
+
+<body id="black">
+  <!-- Home -->
+
+  <div data-role="page" id="page-map">
+    <div data-theme="a" data-role="header">
+  <!-- About button -->
+      <a id="about" data-role="button" data-transition="slide"
+      data-direction="reverse" href=
+      "#page-about" data-icon="info" data-iconpos="left" class=
+      "ui-btn-left">About</a>
+  <!-- Search button -->
+  <a data-role="button" id="search_page"
+      data-transition="slide" href="#page-search" data-icon=
+      "search" data-iconpos="right" class="ui-btn-right">Search</a>
+
+      <h3><span id="titlebar">Fusion Table Data</span></h3>
+    </div>
+
+  <!-- Bounds Exceeded popup message -->
+    <div data-role="popup" id="popupDialog" data-overlay-theme="a" data-theme="c"
+     style="max-width:400px;" class="ui-corner-all">
+      <div data-role="content" data-theme="d" class="ui-corner-bottom ui-content">
+        <p id="alertMessageText"></p> 
+        <a href="#page-map" id="alertMessageClose" data-role="button">OK</a>  
+      </div>
+    </div>
+
+  <!-- The Map -->
+    <div data-role="content" id="map_content" style="">
+      <div id="map_canvas" style=
+      "position:absolute;top:42px;bottom:42px;left:0px;right:0px;">
+      </div>
+    </div>
+
+  <!-- Nearby button -->
+    <div data-theme="a" data-role="footer" data-position="fixed"
+    style="height:42px">
+      <a id="nearby" data-role="button" href="#nearby" data-icon=
+      "location" data-iconpos="left" class="ui-btn-left">
+      <span id="nearby-name">Nearby</span></a>
+
+  <!-- List button -->
+      <a data-role="button" href="#page-list" data-icon="bars" id=
+      "listview" data-transition="slideup" data-iconpos="right"
+      class="ui-btn-right">List</a>
+    </div>
+  </div>
+
+  <!-- About view -->
+  <div data-role="page" id="page-about">
+    <div data-theme="a" data-role="header">
+      <a data-role="button" data-transition="slide" data-icon="arrow-l" data-iconpos=
+      "left" href="#page-map" class="ui-btn-left" id="about_back">Back</a>
+
+      <h3>About</h3>
+    </div>
+
+    <div data-role="content" id="section-about">
+    </div>
+  </div>
+
+  <!-- List view -->
+  <div data-role="page" id="page-list">
+    <div data-theme="a" data-role="header">
+      <a data-role="button" data-direction="reverse"
+      data-transition="slideup" href="index.html#page-map"
+      data-icon="arrow-l" data-iconpos="left" class=
+      "ui-btn-left" id="list_back">Back</a>
+
+      <h3>List</h3>
+    </div>
+
+    <div data-role="content">
+      <ul data-role="listview" id="listview" data-divider-theme=""
+      data-inset="false">
+        <li data-theme="c">Loading results...</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Search dialog -->
+  <div data-role="page" id="page-search">
+    <div data-theme="a" data-role="header">
+      <a data-role="button" data-direction="reverse"
+      data-transition="slide" href="index.html#page-map"
+      data-icon="arrow-l" data-iconpos="left" class=
+      "ui-btn-left" id="search_back">Back</a>
+
+      <h3>Search</h3>
+    </div>
+
+    <div data-role="content">
+        <div id="section-search" data-role="fieldcontain"></div>
+        <button class="btn" id="search">Search</button>
+    </div>
+  </div>
+
+<!-- User-generated js -->
+  <script type="text/javascript">
+  $(function() {
+      MapsLib.initialize();
+
+      $("#about").click(function() { MapsLib.ignoreIdle = true; });
+      $("#search_page").click(function() { MapsLib.ignoreIdle = true; });
+      $("#listview").click(function(){
+        MapsLib.ignoreIdle = true;
+        MapsLib.getListView();
+      });
+
+      $("#about_back").click(function() { MapsLib.reCenterWhenReady(); });
+      $("#search_back").click(function() { MapsLib.reCenterWhenReady(); });
+      $("#list_back").click(function() { MapsLib.reCenterWhenReady(); });
+
+      $("#search").click(function(){
+        MapsLib.reCenterWhenReady();
+        MapsLib.doSearch();
+        window.location = "#page-map";
+      });
+  });
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-39859509-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</body>
+</html>
