@@ -68,7 +68,7 @@ $.extend(MapsLib, {
     boundsExceededMessage:  "Your location is far away from San Francisco.  Defaulting to city limits.",
 
     // start at this zoom if starting at nearby location
-    nearbyZoom:             17,
+    nearbyZoom:             14,
 
     // Snap to nearby zoom level when user hits "Nearby"?  Options are:
     // true               = always snap to zoom level
