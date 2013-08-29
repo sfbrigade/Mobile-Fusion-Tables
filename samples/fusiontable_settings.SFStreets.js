@@ -3,18 +3,22 @@
  * See maps_lib.js for license and repository
  *
  * REPLACE THE SETTINGS BELOW TO REFER TO YOUR OWN DATA.
+ *
+ * Required:
  * 1. Fusion Table IDs
+ *
+ * Overrides (optional):
  * 2. Map Preferences
+ *   - How It Should Use Your Nearby Location
  * 3. Custom Content
  *   - Title
  *   - About Page
  *   - Infobox (popup when you click on a location)
  * 4. Search Settings
- *   - Default is a field for every column if you set this to nothing
+ *   - Default is a field for every column if you don't set this
  */
 
 var MapsLib = MapsLib || {};
-$.extend(MapsLib, {
 
 
   /////////////////////////
@@ -25,29 +29,35 @@ $.extend(MapsLib, {
   // See https://developers.google.com/fusiontables/docs/v1/migration_guide for more info
 
   // The encrypted Table ID of your Fusion Table (found under File => About)
-  fusionTableId:      "10zr7wF49yQWKB4A0vAtoKPfvvBPPZQ8BVEfAqDw",
+  MapsLib.fusionTableId = "10zr7wF49yQWKB4A0vAtoKPfvvBPPZQ8BVEfAqDw";
 
   // *New Fusion Tables Requirement* API key. found at https://code.google.com/apis/console/
   // *Important* this key is for demonstration purposes. please register your own.
-  googleApiKey:       "AIzaSyAMVBSXes-6P-gWaxRj20GK8NT6WDVpozM",
+  MapsLib.googleApiKey ="AIzaSyAMVBSXes-6P-gWaxRj20GK8NT6WDVpozM";
 
-  // Override the location column in your Fusion Table (useful if you have multiple columns)
-  // NOTE: if you have "latitude" and "longitude" columns, just use "latitude"
-  //locationColumn:     "Geometry",
-  
+
+  // YOU CAN DELETE EVERYTHING AFTER THIS POINT AND STILL HAVE A WORKING APP. //
+  // EVERYTHING BELOW IS CUSTOM OVERRIDES TO MAKE YOUR APP EVEN MORE AWESOME. //
+
+
+$.extend(MapsLib, {
 
   ////////////////////////
   // 2. MAP PREFERENCES //
   ////////////////////////
 
+  // Override the location column in your Fusion Table (useful if you have multiple columns)
+  // NOTE: if you have "latitude" and "longitude" columns, just use "latitude"
+  //locationColumn:     "Geometry",
+
   // Center that your map defaults to
   mapDefaultCenter: new google.maps.LatLng(37.77, -122.45), // center of San Francisco
 
-  // Using Fusion Table's "zoom" levels, where X-1 covers twice the radius of X.
+  // Using Fusion Table's "zoom" levels, where X+1 zooms in to half the radius of X.
   // A zoom level of 14 = radius of 1 mile visible on an iPhone
   defaultZoom: 11,    // zoom level when using mapDefaultCenter
 
-  // Comment out useNearbyLocation if you don't want to get the user's location.
+  // Set useNearbyLocation to false if you don't want to get the user's location.
   useNearbyLocation: {
     startAtNearbyLocation:  true,
 
@@ -75,8 +85,9 @@ $.extend(MapsLib, {
   // Title bar (including title of website)
   title: "SF Streets",
 
+  // Contents of the About Page.  You can use "{title}" to insert your title.
   aboutPage: " \
-    <h3>About SF Streets</h3> \
+    <h3>About {title}</h3> \
     <p>This is a demonstration of a Mobile Template using Fusion Tables.  Developed by SF Brigade for Code For America, it's an adaptation of Derek Eder's searchable Fusion Table template, licensed under the <a href='https://github.com/derekeder/FusionTable-Map-Template/wiki/License' target='_blank'>MIT License</a>.  This particular application uses SF street data provided by the SFCTA.</p> \
     <p>To use this template for your own Fusion Table data, <a href='https://github.com/sfbrigade/FusionTable-Map-MobileTemplate' target='_blank'>clone this repository</a> and replace the fields inside fusiontable_settings.js to match your content.</p> \
     ",
