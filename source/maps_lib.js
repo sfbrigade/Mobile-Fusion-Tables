@@ -165,10 +165,6 @@ $.extend(MapsLib, {
     // hide map until we get current location (to avoid snapping)
     $("#map_canvas").css("visibility","hidden"); 
     MapsLib.map = new google.maps.Map($("#map_canvas")[0],myOptions);
-    if (MapsLib.useNearbyLocation && "nearbyZoom" in MapsLib.useNearbyLocation)
-    {
-      MapsLib.map.setZoom(MapsLib.useNearbyLocation.nearbyZoom);
-    }
     
     // add to list view when user scrolls to the bottom
     $(window).scroll(function() {
@@ -222,6 +218,7 @@ $.extend(MapsLib, {
       }
       else
       {
+        MapsLib.map.setZoom(MapsLib.useNearbyLocation.nearbyZoom);
         MapsLib.currentPinpoint = MapsLib.nearbyPosition;
         MapsLib.map.setCenter(MapsLib.nearbyPosition);
         MapsLib.map_centroid = MapsLib.nearbyPosition;

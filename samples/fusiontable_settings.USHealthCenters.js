@@ -55,7 +55,7 @@ $.extend(MapsLib, {
 
   // Using Fusion Table's "zoom" levels, where X+1 zooms in to half the radius of X.
   // A zoom level of 14 = radius of 1 mile visible on an iPhone
-  defaultZoom: 5,    // zoom level when using mapDefaultCenter
+  defaultZoom: 4,    // zoom level when using mapDefaultCenter
 
   // Set useNearbyLocation to false if you don't want to get the user's location.
   useNearbyLocation: {
