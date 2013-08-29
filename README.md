@@ -1,5 +1,5 @@
-Mobile Fusion Table
-===================
+Mobile Fusion Tables
+====================
 
 This is a mobile-ready template using Google Maps and Fusion Tables, based on Derek Eder's [Fusion Table Searchable Map Template](https://github.com/derekeder/FusionTable-Map-Template).
 
