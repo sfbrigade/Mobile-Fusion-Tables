@@ -6,7 +6,7 @@ This is a mobile-ready template using Google Maps and Fusion Tables, based on De
 Demos
 -----
 
-- US Health Centers: http://codeforsanfrancisco.org/Mobile-Fusion-Tables
+- US Health Centers: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-USHealthCenters.html
 - SF Bank Locations: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFBanks.html
 - SF Food Inspections: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFFoodInspections.html
 - SF Liquefaction Data: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFLiquefaction.html
