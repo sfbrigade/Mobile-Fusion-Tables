@@ -21,7 +21,7 @@ Setup
 1. Clone this repository.
 2. Replace the FusionTable ID at the top of fusiontable_settings.js to point to your own table.
 
-That's it.  You now have a working site that uses your table's existing data, title, description, and infobox style.  Once you open the webpage on your device and hit "Add to Home Screen", you should have something that looks and feels like a mobile app.
+That's it.  You now have a working site that uses your own table's data, title, description, and infobox style, with a search field for each column.  Once you open the webpage on your device and hit "Add to Home Screen", you should have something that looks and feels like a mobile app.
 
 If you want to make your app even sexier, explore the rest of the settings file to customize your content and behavior.  See the "samples" folder to see how the above demos were customized. 
 
