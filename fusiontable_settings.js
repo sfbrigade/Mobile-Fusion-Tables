@@ -36,8 +36,10 @@ var MapsLib = MapsLib || {};
   MapsLib.googleApiKey = "AIzaSyAMVBSXes-6P-gWaxRj20GK8NT6WDVpozM";
 
 
-  // YOU CAN DELETE EVERYTHING AFTER THIS POINT AND STILL HAVE A WORKING APP. //
-  // EVERYTHING BELOW IS CUSTOM OVERRIDES TO MAKE YOUR APP EVEN MORE AWESOME. //
+  // DONE!  YOU COULD DELETE EVERYTHING AFTER THIS POINT AND STILL HAVE A WORKING APP.
+
+  // BELOW ARE CUSTOM OVERRIDES TO MAKE YOUR APP MORE AWESOME.
+  // UNCOMMENT EACH SECTION AS YOU GO.
 
 
 $.extend(MapsLib, {
@@ -46,9 +48,10 @@ $.extend(MapsLib, {
   // 2. MAP PREFERENCES //
   ////////////////////////
 
+/*
   // Override the location column in your Fusion Table (useful if you have multiple columns)
   // NOTE: if you have "latitude" and "longitude" columns, just use "latitude"
-  //locationColumn:     "Address",
+  locationColumn:     "Address",
 
   // Center that your map defaults to
   mapDefaultCenter: new google.maps.LatLng(39.83, -98.58), // center of U.S.
@@ -59,6 +62,7 @@ $.extend(MapsLib, {
 
   // Set useNearbyLocation to false if you don't want to get the user's location.
   useNearbyLocation: {
+
     startAtNearbyLocation:  true,
 
     // onlyIfWithin: (comment out if you always want to use nearby location)
@@ -76,12 +80,13 @@ $.extend(MapsLib, {
     // int                = snap to zoom level if current zoom is more then specified levels away (X level = 2^X magnitude)
     snapToNearbyZoom:       3
   },
-
+*/
 
   ///////////////////////
   // 3. CUSTOM CONTENT //
   ///////////////////////
 
+/*
   // Title bar (including title of website)
   title: "U.S. Health Centers",
 
@@ -109,7 +114,6 @@ $.extend(MapsLib, {
     .entity.orange_box.Government { display: none; } \
     .entity.orange_box.Corporate { display: none; } \
   ",
-
 
   // Handlebars template using the following variables:
   //  - row.COLUMN_NAME, returns value for given column in your FusionTable row
@@ -150,12 +154,13 @@ $.extend(MapsLib, {
   // HTML is OK.  Use "{address}" to denote the entered address for addressPinInfobox.
   nearbyPinInfobox: "You are here.",
   addressPinInfobox: "{address}",
-
+*/
 
   ////////////////////////
   // 4. SEARCH SETTINGS //
   ////////////////////////
 
+/*
   // Appended/Assumed for all address searches
   // Format: [City,] STATE.  (can be null/empty)  
   addressScope:      "", //San Francisco, CA",      
@@ -188,7 +193,6 @@ $.extend(MapsLib, {
   //       - exact_match (default=false, meaningless if options is specified): look for exact match instead of a contains match
   //  If "allColumns" is true, "columns" will simply override label/match settings for the specified columns
 
-  //searchPage: {} // use this to just get a text field for each column
   searchPage: { 
     allColumns: false,
     distanceFilter: { 
@@ -206,5 +210,6 @@ $.extend(MapsLib, {
       { label: "Name", column: "Name", exact_match: false }
     ]
   }
+*/
 
 });
