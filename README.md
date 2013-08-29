@@ -8,7 +8,7 @@ Demos
 
 - US Health Centers: http://codeforsanfrancisco.org/Mobile-Fusion-Tables
 - SF Bank Locations: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFBanks.html
-- SF Food Inspection Data: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFFoodInspections.html
+- SF Food Inspections: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFFoodInspections.html
 - SF Liquefaction Data: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFLiquefaction.html
 - SF Transportation Projects: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFStreets.html
 
