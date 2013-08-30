@@ -14,14 +14,20 @@ var MapsLib = MapsLib || {};
 $.extend(MapsLib, {
   // map and positions
   map:                null, // gets initialized below
-  map_centroid:       null, // gets initialized below
   maxDistanceFromDefaultCenter: 0,
   nearbyZoomThreshold:-1,
   searchRadiusCircle: null,
   nearbyPosition:     null,
   overrideCenter:     false, 
   ignoreIdle:         false,
+  numericalColumns:   [],
+
+  // map overrides
+  useNearbyLocation:  MapsLib.useNearbyLocation || {},
   locationColumn:     MapsLib.locationColumn || "",
+  mapDefaultCenter:   MapsLib.mapDefaultCenter || new google.maps.LatLng(37.77, -122.45), // center on SF if all else fails
+  map_centroid:       MapsLib.mapDefaultCenter,
+  defaultZoom:        MapsLib.defaultZoom || 9,
 
   // markers
   addrMarker:         null,
@@ -90,20 +96,17 @@ $.extend(MapsLib, {
       document.head.appendChild(css);
     }
 
-    // fill in defaults for map settings
-    MapsLib.mapDefaultCenter = MapsLib.default(new google.maps.LatLng(37.77, -122.45), MapsLib.mapDefaultCenter); // center on SF if all else fails
-    MapsLib.map_centroid = MapsLib.mapDefaultCenter;
-    MapsLib.defaultZoom = MapsLib.default(11, MapsLib.defaultZoom);
-    MapsLib.useNearbyLocation = MapsLib.default({}, MapsLib.useNearbyLocation);
-    MapsLib.useNearbyLocation.startAtNearbyLocation = MapsLib.default(true, MapsLib.useNearbyLocation.startAtNearbyLocation);
-    // MapsLib.useNearbyLocation.onlyIfWithin: leave undefined
-    MapsLib.useNearbyLocation.boundsExceededMessage = MapsLib.default("You're currently outside the furthest data point from center.  Defaulting to geographical center of data.", MapsLib.useNearbyLocation.boundsExceededMessage);
-    MapsLib.useNearbyLocation.nearbyZoom = MapsLib.default(MapsLib.defaultZoom + 5, MapsLib.useNearbyLocation.nearbyZoom); 
-    MapsLib.useNearbyLocation.snapToNearbyZoom = MapsLib.default(3, MapsLib.useNearbyLocation.snapToNearbyZoom);
+    // fill in defaults for useNearbyLocation settings
+    var nearbyLocationDefaults = { startAtNearbyLocation: true, boundsExceededMessage: "You're currently outside the furthest data point from center.  Defaulting to geographical center of data.",
+     nearbyZoom: MapsLib.defaultZoom + 5, snapToNearbyZoom: 3};  // leave onlyIfWithin undefined
+    for (key in nearbyLocationDefaults)
+    {
+      if (!(key in MapsLib.useNearbyLocation)) MapsLib.useNearbyLocation[key] = nearbyLocationDefaults[key];
+    }
 
     // fill in defaults for searchPage settings
     var searchPageDefaults = { allColumns: true, allColumnsExactMatch: false, searchByAddress: true,
-      distanceFilter: {}, dropDowns: [], columns: [] };
+      addressScope: "", distanceFilter: {}, dropDowns: [], columns: [] };
     var distanceFilterDefaults = { filterSearchResults: true, filterListResults: true, dropDown: [] };
     for (key in searchPageDefaults)
     {
@@ -339,7 +342,10 @@ $.extend(MapsLib, {
       if (MapsLib.queueInfobox)
       {
         MapsLib.queueInfobox = false;
-        MapsLib.map_centroid = MapsLib.infoWindow.location;
+        if (MapsLib.infoWindow.location != undefined)
+        {
+          MapsLib.map_centroid = MapsLib.infoWindow.location;
+        }
         MapsLib.map.setCenter(MapsLib.map_centroid);
         MapsLib.infoWindow.open(MapsLib.map);
       }
@@ -422,7 +428,7 @@ $.extend(MapsLib, {
     for (var i=0; i<columns.length; i++)
     {
       var field = columns[i];
-      var placeholder = field.exact_match ? "Exact match (case-sensitive)" : "Match anything containing this text";
+      var placeholder = ($.inArray(field.column, MapsLib.numericalColumns) != -1 || field.exact_match) ? "Exact match (case-sensitive)" : "Match anything containing this text";
       html.push("<hr><label for='sc_" + field.column + "'>" + field.label + ":</label>");
       html.push("<input class='input-block-level' data-clear-btn='true' data-ref='column' data-field='" + 
         field.column + "' data-exact='" + field.exact_match + "' id='sc_" + field.column + "' placeholder='" + 
@@ -449,7 +455,7 @@ $.extend(MapsLib, {
         { 
           value = value.replace("'","''"); // escape single quotes for SQL query
           var column = $(this).attr("data-field");
-          if ($(this).attr("data-exact") == 'true')
+          if ($.inArray(column, MapsLib.numericalColumns) != -1 || $(this).attr("data-exact") == 'true')
           {
             whereClauses.push("'" + column + "' = '" + value + "'");
           }
@@ -479,10 +485,10 @@ $.extend(MapsLib, {
     if (address != "" && address != undefined) {
         // search w/ specified address
         var shortAddress = address;
-        if (MapsLib.addressScope != undefined && MapsLib.addressScope.replace(" ","") != "")
+        if (MapsLib.searchPage.addressScope != "")
         {
           // append or replace tail of address with location scope (using commas as scope boundaries)
-          var numCommas = (address.split(",").length - MapsLib.addressScope.split(",").length);
+          var numCommas = (address.split(",").length - MapsLib.searchPage.addressScope.split(",").length);
           var index = null, comma = 0;
           while (comma < numCommas && index != -1) {
               index = address.indexOf(",", index+1);
@@ -490,7 +496,7 @@ $.extend(MapsLib, {
           }
           if (index == null) index = address.length;
           shortAddress = address.substring(0,index);
-          address = shortAddress + ", " + MapsLib.addressScope;
+          address = shortAddress + ", " + MapsLib.searchPage.addressScope;
           $("#search_address").val(address);
         }
 
@@ -537,7 +543,7 @@ $.extend(MapsLib, {
         }
       });
     }
-    else if ((MapsLib.searchPage.distanceFilter.dropDown.length > 0 || MapsLib.searchPage.searchByAddress) && (typeof hideRadius == 'undefined' || hideRadius == false) && MapsLib.map_centroid != undefined)
+    else if ((MapsLib.searchPage.distanceFilter.dropDown.length > 0 || MapsLib.searchPage.searchByAddress) && (hideRadius == undefined || hideRadius == false) && MapsLib.map_centroid != undefined)
     {
       // search w/ current location
       MapsLib.currentPinpoint = MapsLib.map_centroid;
@@ -624,6 +630,7 @@ $.extend(MapsLib, {
     //you can find your Ids inside the link generated by the 'Publish' option in Fusion Tables
     //for more details, see https://developers.google.com/fusiontables/docs/v1/using#WorkingStyles
 
+    console.log("SQL Query: " + whereClause);
     MapsLib.searchrecords = new google.maps.FusionTablesLayer({
       query: {
         from:   MapsLib.fusionTableId,
@@ -742,13 +749,35 @@ $.extend(MapsLib, {
 
     var all_columns = [];
     var num_columns = json["columns"].length;
+    var setLocation = (MapsLib.locationColumn == "");
+    var locPriorites = {addr: 1, geometry: 2, latitude: 3}; // higher value takes address priority
+    var maxPriority = 0;
     for (var i = 0; i < num_columns; i++)
     {
       var name = json["columns"][i]["name"];
       all_columns.push(name);
-      if (MapsLib.locationColumn == "" && json["columns"][i]["type"] == "LOCATION")
+      if (json["columns"][i]["type"] == "NUMBER")
       {
-        MapsLib.locationColumn = name;
+        MapsLib.numericalColumns.push(name);
+      }
+      if (setLocation && json["columns"][i]["type"] == "LOCATION")
+      {
+        var lname = name.toLowerCase();
+        for (key in locPriorites)
+        {
+          var curPriority = locPriorites[key];
+          if ((lname == key && curPriority >= maxPriority) ||
+            (lname.indexOf(key) != -1 && curPriority > maxPriority))
+          {
+            MapsLib.locationColumn = name;
+            maxPriority = curPriority;
+            break;
+          }
+        }
+        if (maxPriority == 0)
+        {
+          MapsLib.locationColumn = name;
+        }
       }
     }
     // make sure location column has single quotes if it contains a space
@@ -839,7 +868,7 @@ $.extend(MapsLib, {
             {
               MapsLib.infoWindow.close();
               var row = MapsLib.selectedListRow;
-              if (MapsLib.locationColumn.toLowerCase() == "latitude")
+              if (MapsLib.locationColumn.toLowerCase().indexOf("latitude") != -1)
               {
                 MapsLib.infoWindow.setOptions({
                     content: MapsLib.infoboxContent(row, false),
@@ -849,7 +878,7 @@ $.extend(MapsLib, {
                 MapsLib.queueInfobox = true;
                 MapsLib.reCenterWhenReady();
               }
-              else if (MapsLib.locationColumn.toLowerCase() == "geometry")
+              else if (MapsLib.locationColumn.toLowerCase().indexOf("geometry") != -1)
               {
                 // HACK: can't seem to get a center point if map uses "geometry" polygons.  Just grab a corner instead.
                 // There's a number of ways to get lng/lat from a geo (can be a point, a line, a polygon).
