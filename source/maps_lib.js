@@ -345,8 +345,8 @@ $.extend(MapsLib, {
         if (MapsLib.infoWindow.location != undefined)
         {
           MapsLib.map_centroid = MapsLib.infoWindow.location;
+          MapsLib.map.setCenter(MapsLib.map_centroid);
         }
-        MapsLib.map.setCenter(MapsLib.map_centroid);
         MapsLib.infoWindow.open(MapsLib.map);
       }
       else
@@ -749,9 +749,13 @@ $.extend(MapsLib, {
 
     var all_columns = [];
     var num_columns = json["columns"].length;
+
+    // Logic to determine which is the best location column if user hasn't specified it in settings:
+    //   lat(itude) > geometry > addr(ess) > any other location column
+    //   allow for contains-match (except for lat)
     var setLocation = (MapsLib.locationColumn == "");
     var locPriorites = {addr: 1, geometry: 2, latitude: 3}; // higher value takes address priority
-    var maxPriority = 0;
+    var foundPriority = 0;
     for (var i = 0; i < num_columns; i++)
     {
       var name = json["columns"][i]["name"];
@@ -766,16 +770,18 @@ $.extend(MapsLib, {
         for (key in locPriorites)
         {
           var curPriority = locPriorites[key];
-          if ((lname == key && curPriority >= maxPriority) ||
-            (lname.indexOf(key) != -1 && curPriority > maxPriority))
+          if ((lname == "lat" && MapsLib.locationColumn != "latitude") ||  // only exact-match for "lat"
+            (lname == key && curPriority >= foundPriority) || // exact-match overrides contains-match
+            (lname.indexOf(key) != -1 && curPriority > foundPriority)) // contains-match if higher priority
           {
             MapsLib.locationColumn = name;
-            maxPriority = curPriority;
+            foundPriority = curPriority;
             break;
           }
         }
-        if (maxPriority == 0)
+        if (foundPriority == 0)
         {
+          // use this location column unless we find a higher-priority column
           MapsLib.locationColumn = name;
         }
       }
