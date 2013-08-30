@@ -8,14 +8,14 @@
  * 1. Fusion Table IDs
  *
  * Overrides (optional):
- * 2. Map Preferences
- *   - How It Should Use Your Nearby Location
+ * 2. Search Settings
+ *   - Default is a field for every column if you don't set this
  * 3. Custom Content
  *   - Title
  *   - About Page
  *   - Infobox (popup when you click on a location)
- * 4. Search Settings
- *   - Default is a field for every column if you don't set this
+ * 4. Map Preferences
+ *   - How It Should Use Your Nearby Location
  */
 
 var MapsLib = MapsLib || {};
@@ -45,42 +45,62 @@ var MapsLib = MapsLib || {};
 $.extend(MapsLib, {
 
   ////////////////////////
-  // 2. MAP PREFERENCES //
+  // 2. SEARCH SETTINGS //
   ////////////////////////
 
-/*
-  // Override the location column in your Fusion Table (useful if you have multiple columns)
-  // NOTE: if you have "latitude" and "longitude" columns, just use "latitude"
-  locationColumn:     "Address",
+/*    
+  // By default, you will get a text field for each column.
+  // However, you can customize search settings using the following attributes:
+  //
+  //  - allColumns (default=true):            a text field will appear for each column.
+  //
+  //  - allColumnsExactMatch (default=false): allColumns + exact matching of fields.
+  //
+  //  - searchByAddress (default=true):       show address field for centering search
+  //
+  //  - addressScope (format=[City,] STATE):  assume a particular city/state for all address searches
+  // 
+  //  - distanceFilter: drop-down for restricting search results by distance to address (or nearby).  Comment this out to have no such drop-down.
+  //     - filterSearchResults (default=true): limit search results to those within distance
+  //     - filterListResults (default=true): limit list results to those within distance (otherwise they're just ordered nearest-first)
+  //     - dropDown: array of drop-down options for distance from address
+  //       - Each entry is an array of [zoom level, label for drop-down, true if default selection]
+  //       - You can specify zoom level 0 for an option to not filter by distance, and leave zoom as-is.
+  //
+  //  - dropDowns: array of custom drop-downs, where an entry has the following attributes:
+  //       - label
+  //       - options: array of drop-down entries.  Each entry is an array of [label, Fusion Table SQL-style WHERE clause, true if default selection]
+  //       - see https://developers.google.com/fusiontables/docs/v1/sql-reference for Fusion Table-friendly WHERE clauses
+  //
+  //  - columns: array of column fields, where a field has the following attributes:
+  //       - label
+  //       - column: name of column
+  //       - exact_match (default=false, meaningless if options is specified): look for exact match instead of a contains match
+  //
+  //  If "allColumns" is true, "columns" will simply override label/match settings for the specified columns
+  //  Fields for numerical columns use exact match- they have no support for contains match.
+  //    (Create a drop-down to search within ranges in numerical value.)
 
-  // Center that your map defaults to
-  mapDefaultCenter: new google.maps.LatLng(39.83, -98.58), // center of U.S.
-
-  // Using Fusion Table's "zoom" levels, where X+1 zooms in to half the radius of X.
-  // A zoom level of 14 = radius of 1 mile visible on an iPhone
-  defaultZoom: 5,    // zoom level when using mapDefaultCenter
-
-  // Set useNearbyLocation to false if you don't want to get the user's location.
-  useNearbyLocation: {
-
-    startAtNearbyLocation:  true,
-
-    // onlyIfWithin: (comment out if you always want to use nearby location)
-    // "X miles" or "X meters" = if we're within this distance from mapDefaultCenter, use nearby location.
-    //                           otherwise, post boundsExceededMessage (if exists) and use mapDefaultCenter.
-    onlyIfWithin:           "1500 miles",
-    boundsExceededMessage:  "You're currently outside the continental United States.  Defaulting to geographical center.",
-
-    // start at this zoom if starting at nearby location
-    nearbyZoom:             10,
-
-    // Snap to nearby zoom level when user hits "Nearby"?  Options are:
-    // true               = always snap to zoom level
-    // false (default)    = never snap to zoom level
-    // int                = snap to zoom level if current zoom is more then specified levels away (X level = 2^X magnitude)
-    snapToNearbyZoom:       3
+  searchPage: { 
+    allColumns: false,
+    addressScope: "San Francisco, CA",
+    distanceFilter: { 
+      dropDown: [ [0, "Anywhere", true], [13, "2 miles"], [11, "8 miles"], [7, "100 miles"], [5, "500 miles"] ]
+    },
+    dropDowns: [ 
+      { label: "Organization Type", options: [
+        ["Any", "", true],
+        [".gov", "'Grantee Organization Type Description' = 'U.S. Government Entity'"],
+        [".com", "'Grantee Organization Type Description' = 'Corporate Entity, Federal Tax Exempt'"],
+        [".org", "'Grantee Organization Type Description' NOT EQUAL TO 'Corporate Entity, Federal Tax Exempt' AND 'Grantee Organization Type Description' NOT EQUAL TO 'U.S. Government Entity'"]
+      ] }
+    ]
+    ,columns: [
+      { label: "Name", column: "Name", exact_match: false }
+    ]
   },
 */
+
 
   ///////////////////////
   // 3. CUSTOM CONTENT //
@@ -156,59 +176,42 @@ $.extend(MapsLib, {
   addressPinInfobox: "{address}",
 */
 
+
   ////////////////////////
-  // 4. SEARCH SETTINGS //
+  // 4. MAP PREFERENCES //
   ////////////////////////
 
 /*
-  // Appended/Assumed for all address searches
-  // Format: [City,] STATE.  (can be null/empty)  
-  addressScope:      "", //San Francisco, CA",      
+  // Override the location column in your Fusion Table (useful if you have multiple columns)
+  // NOTE: if you have "latitude" and "longitude" columns, just use "latitude"
+  locationColumn:     "Address",
 
-  // Search Page:
-  // By default, you will get a text field for each column.
-  // However, you can customize search settings using the following attributes:
-  //
-  //  - allColumns (default=true):            a text field will appear for each column.
-  //
-  //  - allColumnsExactMatch (default=false): allColumns + exact matching of fields.
-  //
-  //  - searchByAddress (default=true):       show address field for centering search
-  // 
-  //  - distanceFilter: drop-down for restricting search results by distance to address (or nearby).  Comment this out to have no such drop-down.
-  //     - filterSearchResults (default=true): limit search results to those within distance
-  //     - filterListResults (default=true): limit list results to those within distance (otherwise they're just ordered nearest-first)
-  //     - dropDown: array of drop-down options for distance from address
-  //       - Each entry is an array of [zoom level, label for drop-down, true if default selection]
-  //       - You can specify zoom level 0 for an option to not filter by distance, and leave zoom as-is.
-  //
-  //  - dropDowns: array of custom drop-downs, where an entry has the following attributes:
-  //       - label
-  //       - options: array of drop-down entries.  Each entry is an array of [label, Fusion Table SQL-style WHERE clause, true if default selection]
-  //       - see https://developers.google.com/fusiontables/docs/v1/sql-reference for Fusion Table-friendly WHERE clauses
-  //
-  //  - columns: array of column fields, where a field has the following attributes:
-  //       - label
-  //       - column: name of column
-  //       - exact_match (default=false, meaningless if options is specified): look for exact match instead of a contains match
-  //  If "allColumns" is true, "columns" will simply override label/match settings for the specified columns
+  // Center that your map defaults to
+  mapDefaultCenter: new google.maps.LatLng(39.83, -98.58), // center of U.S.
 
-  searchPage: { 
-    allColumns: false,
-    distanceFilter: { 
-      dropDown: [ [0, "Anywhere", true], [13, "2 miles"], [11, "8 miles"], [7, "100 miles"], [5, "500 miles"] ]
-    },
-    dropDowns: [ 
-      { label: "Organization Type", options: [
-        ["Any", "", true],
-        [".gov", "'Grantee Organization Type Description' = 'U.S. Government Entity'"],
-        [".com", "'Grantee Organization Type Description' = 'Corporate Entity, Federal Tax Exempt'"],
-        [".org", "'Grantee Organization Type Description' NOT EQUAL TO 'Corporate Entity, Federal Tax Exempt' AND 'Grantee Organization Type Description' NOT EQUAL TO 'U.S. Government Entity'"]
-      ] }
-    ]
-    ,columns: [
-      { label: "Name", column: "Name", exact_match: false }
-    ]
+  // Using Fusion Table's "zoom" levels, where X+1 zooms in to half the radius of X.
+  // A zoom level of 14 = radius of 1 mile visible on an iPhone
+  defaultZoom: 5,    // zoom level when using mapDefaultCenter
+
+  // Set useNearbyLocation to false if you don't want to get the user's location.
+  useNearbyLocation: {
+
+    startAtNearbyLocation:  true,
+
+    // onlyIfWithin: (comment out if you always want to use nearby location)
+    // "X miles" or "X meters" = if we're within this distance from mapDefaultCenter, use nearby location.
+    //                           otherwise, post boundsExceededMessage (if exists) and use mapDefaultCenter.
+    onlyIfWithin:           "1500 miles",
+    boundsExceededMessage:  "You're currently outside the continental United States.  Defaulting to geographical center.",
+
+    // start at this zoom if starting at nearby location
+    nearbyZoom:             10,
+
+    // Snap to nearby zoom level when user hits "Nearby"?  Options are:
+    // true               = always snap to zoom level
+    // false (default)    = never snap to zoom level
+    // int                = snap to zoom level if current zoom is more then specified levels away (X level = 2^X magnitude)
+    snapToNearbyZoom:       3
   }
 */
 
