@@ -18,7 +18,8 @@
   <link rel="stylesheet" href="source/jquery.mobile-1.3.1.css" type="text/css"/>
 
   <script type="text/javascript" src="source/jquery-1.7.2.min.js"></script>
-  <script type="text/javascript" src="source/jquery.mobile-1.3.1.js"></script> <!-- this must come after jquery -->
+  <!-- if updating jQueryMobile, please see MOBILE-FUSION-TABLES comments in current version -->
+  <script type="text/javascript" src="source/jquery.mobile-1.3.1-modified.js"></script> <!-- this must come after jquery -->
   <script type="text/javascript" src="source/jquery.geocomplete.min.js"></script>
   <script type="text/javascript" src="source/handlebars.js"></script>
   <script type="text/javascript" src="source/jquery.address.min.js"></script>
@@ -84,8 +85,7 @@
   <a data-role="button" id="search_page"
       data-transition="slide" href="#page-search" data-icon=
       "search" data-iconpos="right" class="ui-btn-right">Search</a>
-
-      <h3><span id="titlebar">Fusion Table Data</span></h3>
+      <h3><span id="titlebar"></span></h3>
     </div>
 
   <!-- Bounds Exceeded popup message -->
