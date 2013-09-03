@@ -5246,7 +5246,8 @@ $.mobile.page.prototype.options.degradeInputs = {
 	email: false,
 	month: false,
 	number: false,
-	range: "number",
+	//MOBILE-FUSION-TABLES: support for date ranges
+	range: "text",
 	search: "text",
 	tel: false,
 	time: false,
@@ -7335,6 +7336,23 @@ $.mobile.document.bind( "pagecreate create", function( e ) {
 
 })( jQuery );
 
+//MOBILE-FUSION-TABLES BEGIN: support for date ranges
+// return MM/DD/YYYY if date
+valForSlider = function(val, isDate) {
+	if (isDate) {
+  		var dateVal = new Date();
+      	dateVal.setTime(val);
+      	var month = dateVal.getMonth()+1;
+      	var day = dateVal.getDate();
+      	var str = ((month < 10) ? "0" : "") + month;
+      	str += "/" + ((day < 10) ? "0" : "") + day;
+      	str += "/" + dateVal.getFullYear();
+    	return str;
+	}
+	return val;
+};
+//MOBILE-FUSION-TABLES END
+
 (function( $, undefined ) {
 
 $.widget( "mobile.slider", $.mobile.widget, $.extend( {
@@ -7365,8 +7383,11 @@ $.widget( "mobile.slider", $.mobile.widget, $.extend( {
 			$label = $( "[for='" + controlID + "']" ),
 			labelID = $label.attr( "id" ) || controlID + "-label",
 			label = $label.attr( "id", labelID ),
-			min = !this.isToggleSwitch ? parseFloat( control.attr( "min" ) ) : 0,
-			max =  !this.isToggleSwitch ? parseFloat( control.attr( "max" ) ) : control.find( "option" ).length-1,
+			//MOBILE-FUSION-TABLES BEGIN: support for date ranges
+			isDateType = this.isDate = control.attr("data-dtype") == "date",
+			min = !this.isToggleSwitch ? (this.isDate ? control.attr( "min" ) : parseFloat( control.attr( "min" ) )) : 0,
+			max = !this.isToggleSwitch ? (this.isDate ? control.attr( "max" ) : parseFloat( control.attr( "max" ) )) : control.find( "option" ).length-1,
+			//MOBILE-FUSION-TABLES END
 			step = window.parseFloat( control.attr( "step" ) || 1 ),
 			miniClass = ( this.options.mini || control.jqmData( "mini" ) ) ? " ui-mini" : "",
 			domHandle = document.createElement( "a" ),
@@ -7667,7 +7688,8 @@ $.widget( "mobile.slider", $.mobile.widget, $.extend( {
 	},
 
 	_value: function() {
-		return  this.isToggleSwitch ? this.element[0].selectedIndex : parseFloat( this.element.val() ) ;
+		//MOBILE-FUSION-TABLES: support for date ranges
+		return  this.isToggleSwitch ? this.element[0].selectedIndex : this.element.val() /*parseFloat( this.element.val())*/ ;
 	},
 
 
@@ -7705,10 +7727,12 @@ $.widget( "mobile.slider", $.mobile.widget, $.extend( {
 			control = this.element,
 			isInput = !this.isToggleSwitch,
 			optionElements = isInput ? [] : control.find( "option" ),
-			min =  isInput ? parseFloat( control.attr( "min" ) ) : 0,
-			max = isInput ? parseFloat( control.attr( "max" ) ) : optionElements.length - 1,
+			//MOBILE-FUSION-TABLES BEGIN: support for date ranges
+			min = isInput ? (this.isDate ? Date.parse( control.attr( "min" ) ) : parseFloat(control.attr( "min" ),10)) : 0,
+			max = isInput ? (this.isDate ? Date.parse( control.attr( "max" ) ) : parseFloat(control.attr( "max" ),10)) : optionElements.length - 1,
+			//MOBILE-FUSION-TABLES END
 			step = ( isInput && parseFloat( control.attr( "step" ) ) > 0 ) ? parseFloat( control.attr( "step" ) ) : 1;
-			
+
 		if ( typeof val === "object" ) {
 			data = val;
 			// a slight tolerance helped get to the ends of the slider
@@ -7728,10 +7752,12 @@ $.widget( "mobile.slider", $.mobile.widget, $.extend( {
 				percent = Math.round( ( ( data.pageX - left ) / width ) * 100 );
 			}
 		} else {
+			//MOBILE-FUSION-TABLES BEGIN: support for date ranges
 			if ( val == null ) {
-				val = isInput ? parseFloat( control.val() || 0 ) : control[0].selectedIndex;
+				val = isInput ? ( control.val() || 0 ) : control[0].selectedIndex;
 			}
-			percent = ( parseFloat( val ) - min ) / ( max - min ) * 100;
+			percent = ( (this.isDate ? Date.parse( val ) : parseFloat( val )) - min ) / ( max - min ) * 100;
+			//MOBILE-FUSION-TABLES END
 		}
 
 		if ( isNaN( percent ) ) {
@@ -7775,6 +7801,7 @@ $.widget( "mobile.slider", $.mobile.widget, $.extend( {
 			newval = max;
 		}
 
+		newval = valForSlider(newval, this.isDate);
 		this.handle.css( "left", percent + "%" );
 
 		this.handle[0].setAttribute( "aria-valuenow", isInput ? newval : optionElements.eq( newval ).attr( "value" ) );
@@ -7981,8 +8008,11 @@ $.mobile.document.bind( "pagecreate create", function( e ) {
 			}
 
 			var self = this,
-				min = parseFloat( this._inputFirst.val(), 10 ),
-				max = parseFloat( this._inputLast.val(), 10 ),
+				//MOBILE-FUSION-TABLES BEGIN: support for date ranges
+				isDate = this.isDate = !$.isNumeric(this._inputFirst.val());
+				min = isDate ? Date.parse(this._inputFirst.val()) : parseFloat( this._inputFirst.val(), 10 ),
+				max = isDate ? Date.parse(this._inputLast.val()) : parseFloat( this._inputLast.val(), 10 ),
+				//MOBILE-FUSION-TABLES END
 				first = $( event.target ).hasClass( "ui-rangeslider-first" ),
 				thisSlider = first ? this._inputFirst : this._inputLast,
 				otherSlider = first ? this._inputLast : this._inputFirst;
@@ -7995,19 +8025,23 @@ $.mobile.document.bind( "pagecreate create", function( e ) {
 			}
 			if ( min > max && !this._sliderTarget ) {
 				//this prevents min from being greater then max
-				thisSlider.val( first ? max: min ).slider( "refresh" );
+				//MOBILE-FUSION-TABLES: support for date ranges
+				thisSlider.val( valForSlider(first ? max: min, this.isDate) ).slider( "refresh" );
 				this._trigger( "normalize" );
 			} else if ( min > max ) {
 				//this makes it so clicks on the target on either extreme go to the closest handle
-				thisSlider.val( this._targetVal ).slider( "refresh" );
+				//MOBILE-FUSION-TABLES: support for date ranges
+				thisSlider.val( valForSlider(this._targetVal, this.isDate) ).slider( "refresh" );
 
 				//You must wait for the stack to unwind so first slider is updated before updating second
-				setTimeout( function() {
-					otherSlider.val( first ? min: max ).slider( "refresh" );
+				//MOBILE-FUSION-TABLES BEGIN: support for date ranges
+				setTimeout( (function(self) {
+					otherSlider.val( valForSlider(first ? min: max, self.isDate) ).slider( "refresh" );
 					$.data( otherSlider.get(0), "mobileSlider" ).handle.focus();
 					self._sliderFirst.css( "z-index", first ? "" : 1 );
 					self._trigger( "normalize" );
-				}, 0 );
+				})(this), 0);
+				//MOBILE-FUSION-TABLES END
 				this._proxy = ( first ) ? "first" : "last";
 			}
 			//fixes issue where when both _sliders are at min they cannot be adjusted
