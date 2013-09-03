@@ -72,6 +72,7 @@ $.extend(MapsLib, {
   //       - label
   //       - column: name of column
   //       - exact_match (default=false, meaningless if options is specified): look for exact match instead of a contains match
+  //       - range (numbers and dates only, default=true): use this if you want a range slider.  Looks up minimum and maximum values for column.
   //
   //  If "allColumns" is true, "columns" will simply override label/match settings for the specified columns
   //  Fields for numerical columns use exact match- they have no support for contains match.

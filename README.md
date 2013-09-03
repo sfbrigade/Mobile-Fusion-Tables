@@ -10,7 +10,7 @@ Demos
 - SF Bank Locations: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFBanks.html
 - SF Food Inspections: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFFoodInspections.html
 - SF Liquefaction Data: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFLiquefaction.html
-- SF Transportation Projects: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFStreets.html
+- SFCTA Projects: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-MyStreetSF.html
 
 
 Setup

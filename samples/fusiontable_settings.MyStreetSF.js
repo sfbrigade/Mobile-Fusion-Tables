@@ -72,6 +72,7 @@ $.extend(MapsLib, {
   //       - label
   //       - column: name of column
   //       - exact_match (default=false, meaningless if options is specified): look for exact match instead of a contains match
+  //       - range (numbers and dates only, default=true): use this if you want a range slider.  Looks up minimum and maximum values for column.
   //
   //  If "allColumns" is true, "columns" will simply override label/match settings for the specified columns
   //  Fields for numerical columns use exact match- they have no support for contains match.
@@ -81,15 +82,28 @@ $.extend(MapsLib, {
     allColumns: false,
     addressScope: "San Francisco, CA",
     dropDowns: [
+      { label: "Project Type", options: [
+        ["All Projects", "", true],
+        ["Bicycle", "'Project Type' CONTAINS 'Bicycle'"],
+        ["Major Capital Projects", "'Project Type' CONTAINS 'Major Capital Projects'"],
+        ["Pedestrian Safety", "'Project Type' CONTAINS 'Pedestrian Safety'"],
+        ["Plans and Studies", "'Project Type' CONTAINS 'Plans and Studies'"],
+        ["Signs and Signals", "'Project Type' CONTAINS 'Signs and Signals'"],
+        ["Street Repair", "'Project Type' CONTAINS 'Street Repair'"],
+        ["Transit Enhancements", "'Project Type' CONTAINS 'Transit Enhancements'"],
+        ["Transit Rehab", "'Project Type' CONTAINS 'Transit Rehab'"],
+        ["Transportation Demand Mgmt", "'Project Type' CONTAINS 'Transportation Demand Management'"]
+      ] },
+
       { label: "Cost Range", options: [
-        ["Any", "", true],
+        ["Any Cost", "", true],
         ["At least $1M", "'Total Project Cost Estimate' LIKE '$%_,___,___'"],
         ["At least $10M", "'Total Project Cost Estimate' LIKE '$%__,___,___'"],
         ["At least $100M", "'Total Project Cost Estimate' LIKE '$%___,___,___'"]
-      ] }
+      ] },
     ],
     columns: [
-      { label: "Project Type", column: "Project Type", exact_match: false }
+      { label: "Date Completed By", column: "Project Completion Expected", range: true }
     ]
   },
 
@@ -99,12 +113,12 @@ $.extend(MapsLib, {
   ///////////////////////
 
   // Title bar (including title of website)
-  title: "SF Streets",
+  title: "SFCTA Projects",
 
   // Contents of the About Page.  You can use "{title}" to insert your title.
   aboutPage: " \
     <h3>About {title}</h3> \
-    <p>This is a demonstration of a Mobile Template using Fusion Tables.  Developed by SF Brigade for Code For America, it's an adaptation of Derek Eder's searchable Fusion Table template, licensed under the <a href='https://github.com/derekeder/FusionTable-Map-Template/wiki/License' target='_blank'>MIT License</a>.  This particular application uses SF street data provided by the SFCTA.</p> \
+    <p>This is a demonstration of a Mobile Template using Fusion Tables.  Developed by SF Brigade for Code For America, it's an adaptation of Derek Eder's searchable Fusion Table template, licensed under the <a href='https://github.com/derekeder/FusionTable-Map-Template/wiki/License' target='_blank'>MIT License</a>.  This particular application uses <a href='http://www.sfcta.org/mystreetsf-map' target='_blank'>MyStreetSF</a> data provided by the SFCTA.</p> \
     <p>To use this template for your own Fusion Table data, <a href='https://github.com/sfbrigade/Mobile-Fusion-Tables' target='_blank'>clone this repository</a> and replace the fields inside fusiontable_settings.js to match your content.</p> \
     ",
 

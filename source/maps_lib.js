@@ -21,6 +21,10 @@ $.extend(MapsLib, {
   overrideCenter:     false, 
   ignoreIdle:         false,
   numericalColumns:   [],
+  dateColumns:        [],
+  rangeColumns:       [],
+  columnRanges:       {},
+  outstandingQueries: 0,
 
   // map overrides
   useNearbyLocation:  MapsLib.useNearbyLocation || {},
@@ -87,6 +91,52 @@ $.extend(MapsLib, {
     return (typeof obj == 'undefined' || obj == undefined) ? defaultval : obj;
   },
 
+  getDateString: function(val)
+  {
+    var dateVal = val;
+    if (!(val instanceof Date))
+    {
+      dateVal = new Date();
+      dateVal.setTime(val);
+    }
+    var month = dateVal.getMonth()+1;
+    var day = dateVal.getDate();
+    var str = ((month < 10) ? "0" : "") + month;
+    str += "/" + ((day < 10) ? "0" : "") + day;
+    str += "/" + dateVal.getFullYear();
+    return str;
+  },
+
+  safeNum: function(val) {
+    return (val instanceof Date) ? val.getTime() : val;
+  },
+
+  // saves the min and max dates for sliders
+  sliderMinMaxResult: function(json) {
+    var minMaxHelper = function(val)
+    {
+      return isNaN(val) ? new Date(val) : val;
+    }
+    var numcols = json["columns"].length;
+    for (var i=0; i<numcols; i+=2)
+    {
+      colname = json["columns"][i];
+      colname = colname.substring(8,colname.length-1);
+      var range = {
+        minVal: minMaxHelper(json["rows"][0][i]),
+        maxVal: minMaxHelper(json["rows"][0][i+1])
+      }
+      range.diffVal = MapsLib.safeNum(range.maxVal) - MapsLib.safeNum(range.minVal);
+      range.minSlideVal = range.minVal;
+      range.maxSlideVal = range.maxVal;
+      MapsLib.columnRanges[colname] = range;
+    }
+    if (--MapsLib.outstandingQueries <= 0)
+    {
+      MapsLib.resetSearchHtml();
+    }
+  },
+
   initialize: function() {
     if (MapsLib.stringExists(MapsLib.customCSS))
     {
@@ -145,7 +195,7 @@ $.extend(MapsLib, {
     }
 
     // request list of columns
-    var qstr = "https://www.googleapis.com/fusiontables/v1/tables/" + MapsLib.fusionTableId + "?callback=MapsLib.setColumns&key=" + MapsLib.googleApiKey;
+    var qstr = "https://www.googleapis.com/fusiontables/v1/tables/" + MapsLib.fusionTableId + "?maxResults=100&callback=MapsLib.setColumns&key=" + MapsLib.googleApiKey;
     console.log("Query: " + qstr);
     $.ajax({url: qstr, dataType: "jsonp"});
 
@@ -382,13 +432,12 @@ $.extend(MapsLib, {
       html.push("</select>");
     }
 
-    for (var i=0; i<settings.dropDowns.length; i++)
+    $.each(settings.dropDowns, function(i, cdata)
     {
-      var field = settings.dropDowns[i];
-      var field_id = field.label.replace(" ","_");
-      html.push("<hr><label for='sc_" + field_id + "'>" + field.label + ":</label>");
+      var field_id = MapsLib.safeField(cdata.label);
+      html.push("<hr><label for='sc_" + field_id + "'>" + cdata.label + ":</label>");
       html.push("<select data-ref='custom' id='sc_" + field_id + "' name=''>");
-      var options = field.options;
+      var options = cdata.options;
       for (var j=0; j<options.length; j++)
       {
         var option = options[j];
@@ -396,54 +445,119 @@ $.extend(MapsLib, {
         html.push('<option value="' + option[1] + '"' + selected + ">" + option[0] + "</option>");
       }
       html.push("</select>");
-    }
+    });
 
     var columns = settings.columns;
     if (settings.allColumns || settings.allColumnsExactMatch)
     {
       var customColumns = [];
-      for (var i=0; i<columns.length; i++)
-      {
-        customColumns.push(columns[i].column);
-      }
+      $.each(columns, function(i, cdata) { customColumns.push(cdata.column); });
       columns = []; // custom columns will get reinserted in column order
-      for (var i=0; i<MapsLib.columns.length; i++)
+
+      $.each(MapsLib.columns, function(i, cname)
       {
-        var columnName = MapsLib.columns[i];
-        if ($.inArray(columnName, ["latitude","longitude"]) >= 0) continue;
+        var colLower = cname.toLowerCase();
+        if ($.inArray(colLower, ["latitude","longitude","geometry","shape"]) != -1) return true;
         // skip address field if addressSearched is true
-        if (MapsLib.searchPage.searchByAddress && $.inArray(columnName, ["address","city","state","postal_code"]) >= 0) continue;
-        var cIndex = $.inArray(columnName, customColumns);
+        if (MapsLib.searchPage.searchByAddress && $.inArray(colLower, ["address","city","state","postal_code","zipcode","zip_code"]) != -1) return true;
+
+        var cIndex = $.inArray(cname, customColumns);
         if (cIndex >= 0)
         {
           columns.push(settings.columns[cIndex]);
         }
         else
         {
-          columns.push({column:columnName, label:columnName, exact_match:settings.allColumnsExactMatch});
+          columns.push({column:cname, label:cname, exact_match:settings.allColumnsExactMatch});
         }
-      }
+      });
     }
 
-    for (var i=0; i<columns.length; i++)
+    $.each(columns, function(i, cdata)
     {
-      var field = columns[i];
-      var placeholder = ($.inArray(field.column, MapsLib.numericalColumns) != -1 || field.exact_match) ? "Exact match (case-sensitive)" : "Match anything containing this text";
-      html.push("<hr><label for='sc_" + field.column + "'>" + field.label + ":</label>");
-      html.push("<input class='input-block-level' data-clear-btn='true' data-ref='column' data-field='" + 
-        field.column + "' data-exact='" + field.exact_match + "' id='sc_" + field.column + "' placeholder='" + 
-        placeholder + "' type='text' />");
-    }
+      var comparator = cdata.comparison;
+      var placeholder = "";
+      if (comparator == undefined)
+      {
+        if ($.inArray(cdata.column, MapsLib.numericalColumns) != -1 || $.inArray(cdata.column, MapsLib.dateColumns) != -1)
+        {
+          comparator = "=";
+          placeholder = "Exact match";
+        }
+        else if (cdata.exact_match)
+        {
+          comparator = "=";
+          placeholder = "Exact match (case-sensitive)";
+        }
+        else
+        {
+          comparator = "CONTAINS IGNORING CASE";
+          placeholder = "Match anything containing this text";
+        }
+      }
+      else
+      {
+        placeholder = "Uses " + comparator + " operator";
+      }
+
+      var safename = MapsLib.safeField(cdata.column);
+
+      if (cdata.column in MapsLib.columnRanges)
+      {
+        var range = MapsLib.columnRanges[cdata.column];
+        var fmin = (range.minVal instanceof Date) ? MapsLib.getDateString(range.minVal) : range.minVal;
+        var fmax = (range.maxVal instanceof Date) ? MapsLib.getDateString(range.maxVal) : range.maxVal;
+        var dtype = (range.minVal instanceof Date) ? "date" : "number";
+        if (fmin != undefined && fmax != undefined)
+        {
+          html.push('<hr><div id="sc_' + safename + '" data-role="rangeslider">');
+          html.push("<label for='sc_min_" + safename + "'>" + cdata.label + ":</label>");
+          html.push("<input type='range' data-dtype='" + dtype + "' name='sc_min_" + safename + "' id='sc_min_" + safename + "' data-ref='column' data-field='" + 
+            cdata.column + "' data-compare='>=' value='" + fmin + "' min='" + fmin + "' max='" + fmax + "' />");
+          html.push("<label for='sc_max_" + safename + "'>" + cdata.label + ":</label>");
+          html.push("<input type='range' data-dtype='" + dtype + "' name='sc_max_" + safename + "' id='sc_max_" + safename + "' data-ref='column' data-field='" + 
+            cdata.column + "' data-compare='<=' value='" + fmax + "' min='" + fmin + "' max='" + fmax + "' />");
+          html.push('</div>');
+        }
+      }
+      else
+      {
+        html.push("<hr><label for='sc_" + safename + "'>" + cdata.label + ":</label>");
+        html.push("<input class='input-block-level' data-clear-btn='true' data-ref='column' data-field='" + 
+          cdata.column + "' data-compare='" + comparator + "' id='sc_" + safename + "' placeholder='" + 
+          placeholder + "' type='text' />");
+      }
+    });
     return html.join("");
   },
 
+  resetSearchHtml: function() {
+      $.each(MapsLib.searchPage.columns, function(i, cdata)
+      {
+        if ("range" in cdata)
+        {
+          $("#sc_min_" + MapsLib.safeField(cdata.column) ).slider({value:MapsLib.safeNum(cdata.range.minSlideVal)});
+          $("#sc_max_" + MapsLib.safeField(cdata.column) ).slider({value:MapsLib.safeNum(cdata.range.maxSlideVal)});
+        }
+      });
+      // HACK: the sliders' layouts are messed up unless we repopulate the html after slider()
+      $("#section-search").html(MapsLib.searchHtml());
+      $("#search_address").geocomplete({country: 'us'});
+  },
+
   // Generates search query according to generated HTML for Search section
-  doSearch: function(hideRadius) {
+  doSearch: function(firstSearch) {
+
+    if (firstSearch)
+    {
+      $("#section-search").html(MapsLib.searchHtml());
+    }
+
     MapsLib.clearSearch();
 
     //-----custom filters-------
     var address = $("#search_address").val();
-    MapsLib.searchRadius = (hideRadius == true) ? 0 : $("#search_radius").val()*1;
+    MapsLib.searchRadius = (firstSearch == true) ? 0 : $("#search_radius").val()*1;
     // HACK: search radius was calibrated for min(width,height)=320, so we offset the zoom accordingly
     var min_diameter = Math.min($(document).width(),$(document).height());
     var zoomOffset = Math.round(Math.log(min_diameter/320)/Math.LN2);
@@ -454,15 +568,25 @@ $.extend(MapsLib, {
         if (MapsLib.stringExists(value))
         { 
           value = value.replace("'","''"); // escape single quotes for SQL query
-          var column = $(this).attr("data-field");
-          if ($.inArray(column, MapsLib.numericalColumns) != -1 || $(this).attr("data-exact") == 'true')
+          var comparator = $(this).attr("data-compare");
+          var name = $(this).attr("data-field");
+          if (name in MapsLib.columnRanges)
           {
-            whereClauses.push("'" + column + "' = '" + value + "'");
+            // skip if range is set to full range
+            var range = MapsLib.columnRanges[name];
+            if ($.inArray(name, MapsLib.dateColumns) != -1)
+            {
+              if ((comparator == ">" || comparator == ">=") && (value == MapsLib.getDateString(range.minVal))) return true;
+              if ((comparator == "<" || comparator == "<=") && (value == MapsLib.getDateString(range.maxVal))) return true;
+            }
+            else
+            {
+              if ((comparator == ">" || comparator == ">=") && (value == range.minVal)) return true;
+              if ((comparator == "<" || comparator == "<=") && (value == range.maxVal)) return true;
+            }
+            // TODO: use equals operator if min and max set to same- this requires getting both values
           }
-          else
-          {
-            whereClauses.push("'" + column + "' CONTAINS IGNORING CASE '" + value + "'");
-          }
+          whereClauses.push("'" + $(this).attr("data-field") + "' " + $(this).attr("data-compare") + " '" + value + "'");
         }
     });
 
@@ -543,7 +667,7 @@ $.extend(MapsLib, {
         }
       });
     }
-    else if ((MapsLib.searchPage.distanceFilter.dropDown.length > 0 || MapsLib.searchPage.searchByAddress) && (hideRadius == undefined || hideRadius == false) && MapsLib.map_centroid != undefined)
+    else if ((MapsLib.searchPage.distanceFilter.dropDown.length > 0 || MapsLib.searchPage.searchByAddress) && (firstSearch == undefined || firstSearch == false) && MapsLib.map_centroid != undefined)
     {
       // search w/ current location
       MapsLib.currentPinpoint = MapsLib.map_centroid;
@@ -567,6 +691,11 @@ $.extend(MapsLib, {
     }
   },
 
+  safeField: function(val)
+  {
+    return (val == undefined) ? "" : val.replace(/ /g,"_").replace(/\./g,"").replace(/:/g,"");
+  },
+
   safeShow: function(testobj, visible) {
     if (testobj != null)
     {
@@ -583,7 +712,7 @@ $.extend(MapsLib, {
     var safe_row = {}
     for (key in row)
     {
-      var safekey = key.replace(/ /g,"_").replace(/\./g,"");
+      var safekey = MapsLib.safeField(key);
       var safevalue = $(document.createElement('div')).html(row[key].value).text().replace(MapsLib.unicodeSet, ""); // using jQuery to decode "&amp;"->"&" and so on
       safe_row[safekey] = safevalue;
     }
@@ -760,32 +889,45 @@ $.extend(MapsLib, {
     {
       var name = json["columns"][i]["name"];
       all_columns.push(name);
-      if (json["columns"][i]["type"] == "NUMBER")
+      switch(json["columns"][i]["type"])
       {
-        MapsLib.numericalColumns.push(name);
-      }
-      if (setLocation && json["columns"][i]["type"] == "LOCATION")
-      {
-        var lname = name.toLowerCase();
-        for (key in locPriorites)
-        {
-          var curPriority = locPriorites[key];
-          if ((lname == "lat" && MapsLib.locationColumn != "latitude") ||  // only exact-match for "lat"
-            (lname == key && curPriority >= foundPriority) || // exact-match overrides contains-match
-            (lname.indexOf(key) != -1 && curPriority > foundPriority)) // contains-match if higher priority
+        case "NUMBER":
+          MapsLib.numericalColumns.push(name);
+          break;
+
+        case "DATETIME":
+          MapsLib.dateColumns.push(name);
+          break;
+
+        case "LOCATION":
+          if (setLocation)
           {
-            MapsLib.locationColumn = name;
-            foundPriority = curPriority;
-            break;
+            var lname = name.toLowerCase();
+            for (key in locPriorites)
+            {
+              var curPriority = locPriorites[key];
+              if ((lname == "lat" && MapsLib.locationColumn != "latitude") ||  // only exact-match for "lat"
+                (lname == key && curPriority >= foundPriority) || // exact-match overrides contains-match
+                (lname.indexOf(key) != -1 && curPriority > foundPriority)) // contains-match if higher priority
+              {
+                MapsLib.locationColumn = name;
+                foundPriority = curPriority;
+                break;
+              }
+            }
+            if (foundPriority == 0)
+            {
+              // use this location column unless we find a higher-priority column
+              MapsLib.locationColumn = name;
+            }
           }
-        }
-        if (foundPriority == 0)
-        {
-          // use this location column unless we find a higher-priority column
-          MapsLib.locationColumn = name;
-        }
+          break;
+
+        default:
+          break;
       }
     }
+
     // make sure location column has single quotes if it contains a space
     if (MapsLib.locationColumn.indexOf(" ") != -1)
     {
@@ -793,10 +935,49 @@ $.extend(MapsLib, {
       MapsLib.locationColumn = MapsLib.locationColumn.replace(/''/g,"'");
     }
 
-    MapsLib.columns = all_columns;
-    $("#section-search").html(MapsLib.searchHtml());
-    $("#search_address").geocomplete({country: 'us'});
+    var customColumns = [];
+    $.each(MapsLib.searchPage.columns, function(i, cdata) { customColumns.push(cdata.column); });
+    MapsLib.columns = MapsLib.searchPage.allColumns ? all_columns : customColumns;
     MapsLib.doSearch(true);
+
+    var columnRangeQueries = [];
+    var columnsToCheck = (MapsLib.searchPage.allColumns) ? MapsLib.all_columns : MapsLib.searchPage.columns;
+    $.each(MapsLib.columns, function(i, column)
+    {
+      if ($.inArray(column, MapsLib.numericalColumns) == -1 && $.inArray(column, MapsLib.dateColumns) == -1) return true;
+
+      var cIndex = $.inArray(column, customColumns);
+      if (cIndex >= 0)
+      {
+        if (MapsLib.searchPage.columns[cIndex].range != false)
+        {
+          MapsLib.rangeColumns.push(column);
+          columnRangeQueries.push("MINIMUM('" + column + "'), MAXIMUM('" + column + "')");
+        }
+      }
+      else
+      {
+        MapsLib.rangeColumns.push(column);
+        columnRangeQueries.push("MINIMUM('" + column + "'), MAXIMUM('" + column + "')");
+      }
+    });
+
+    // breaking up the MIN/MAX query to guard against URI's that are too long
+    var i,j,subset,chunk = 10;
+    MapsLib.outstandingQueries = 0;
+    for (i=0,j=columnRangeQueries.length; i<j; i+=chunk) {
+      MapsLib.outstandingQueries += 1;
+      subset = columnRangeQueries.slice(i,i+chunk);
+      var sql = encodeURIComponent("SELECT " + subset.join(", ") + " FROM " + MapsLib.fusionTableId);
+      var qstr = "https://www.googleapis.com/fusiontables/v1/query?sql=" + sql + "&callback=MapsLib.sliderMinMaxResult&key=" + MapsLib.googleApiKey;
+      console.log("Query: " + qstr);
+      $.ajax({url: qstr, dataType: "jsonp"});
+    }
+
+    if (columnRangeQueries.length == 0)
+    {
+      $("#search_address").geocomplete({country: 'us'});
+    }
   },
 
   getListView: function() {
