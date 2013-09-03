@@ -39,21 +39,21 @@ There are four buttons for navigating:
 - **Nearby**: takes you to your current location (you can opt-out of using current location in the settings file)
 - **About**: fill this with your custom description and links
 
-Here's the list view. Clicking on a row will take you back to the map and highlight the pin with an infobox.
-
-![List View](http://sfbrigade.github.io/Mobile-Fusion-Tables/readme-images/listview.png)
-
-By default, the search page gives you a text field for every user column from your table (plus an address for centering your search):
+By default, the search page gives you a range slider for every number/date column in your table, and a text field for every string column (plus an address for centering your search).
 
 ![Default Search](http://sfbrigade.github.io/Mobile-Fusion-Tables/readme-images/search-default.png)
 
-You can customize this with drop-downs and other options:
+You can customize your search page with drop-downs, overrides, and other options:
 
 ![Custom Search](http://sfbrigade.github.io/Mobile-Fusion-Tables/readme-images/search-custom.png)
 
 The address field uses geocomplete, which lets you auto-complete an address:
 
 ![Geocomplete](http://sfbrigade.github.io/Mobile-Fusion-Tables/readme-images/geocomplete.png)
+
+The list view shows the data / search results by row (whose contents you can also customize). Clicking on a row will take you back to the map and highlight the pin with an infobox.
+
+![List View](http://sfbrigade.github.io/Mobile-Fusion-Tables/readme-images/listview.png)
 
 
 Get Involved
