@@ -139,7 +139,7 @@ $.extend(MapsLib, {
 
   // customInfoboxHtml can be defined as a string or a function:
   //  STRING:   You can embed Handlebars expressions and variables.
-  //  FUNCTION: Returns an HTML string and takes one param: an associative array with "row" and "isListView" as keys
+  //  FUNCTION: Returns an HTML string and takes two params: row and isListView
   //  "":       No infobox.
   //  Default (leaving it undefined): falls back on the infobox format from Fusion Table
   //
