@@ -209,6 +209,18 @@ $.extend(MapsLib, {
   },
 
   initialize: function() {
+    // override table ID if passed in through URL
+    var urltokens = window.location.href.split("?");
+    if (urltokens.length >= 2)
+    {
+      var first_arg = urltokens[1].split("#")[0].split("&")[0];
+      if (first_arg.indexOf("key=") == 0)
+      {
+        MapsLib.fusionTableId = first_arg.substring(4,first_arg.length);
+        console.log(MapsLib.fusionTableId);
+      }
+    }
+
     if (MapsLib.stringExists(MapsLib.customCSS))
     {
       var css = document.createElement("style");
