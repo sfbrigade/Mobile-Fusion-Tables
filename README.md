@@ -47,9 +47,9 @@ You can customize your search page with drop-downs, overrides, and other options
 
 ![Custom Search](http://sfbrigade.github.io/Mobile-Fusion-Tables/readme-images/search-custom.png)
 
-The address field uses geocomplete, which lets you auto-complete an address:
+The address field lets you auto-complete an address:
 
-![Geocomplete](http://sfbrigade.github.io/Mobile-Fusion-Tables/readme-images/geocomplete.png)
+![Autocomplete](http://sfbrigade.github.io/Mobile-Fusion-Tables/readme-images/autocomplete.png)
 
 The list view shows the data / search results by row (whose contents you can also customize). Clicking on a row will take you back to the map and highlight the pin with an infobox.
 
