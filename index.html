@@ -157,6 +157,9 @@
       data-icon="arrow-l" data-iconpos="left" class=
       "ui-btn-left" id="search_back">Back</a>
 
+      <a data-role="button" href="index.html#page-map"
+      data-icon="arrow-r" data-iconpos="right" class=
+      "ui-btn-right" id="search_top">Search</a>
       <h3>Search</h3>
     </div>
 
@@ -166,26 +169,32 @@
     </div>
   </div>
 
-<!-- User-generated js -->
   <script type="text/javascript">
   $(function() {
       MapsLib.initialize();
 
-      $("#about").click(function() { MapsLib.ignoreIdle = true; });
-      $("#search_page").click(function() { MapsLib.ignoreIdle = true; });
+      $("#about").click(function() { MapsLib.onExitMap(); });
+      $("#search_page").click(function() { MapsLib.onExitMap(); });
       $("#listview").click(function(){
-        MapsLib.ignoreIdle = true;
+        MapsLib.onExitMap();
         MapsLib.getListView();
       });
 
-      $("#about_back").click(function() { MapsLib.reCenterWhenReady(); });
-      $("#search_back").click(function() { MapsLib.reCenterWhenReady(); });
-      $("#list_back").click(function() { MapsLib.reCenterWhenReady(); });
+      $("#about_back").click(function() { MapsLib.onEnterMap(); });
+      $("#search_back").click(function() { MapsLib.onEnterMap(); });
+      $("#list_back").click(function() { MapsLib.onEnterMap(); });
 
       $("#search").click(function(){
-        MapsLib.reCenterWhenReady();
+        MapsLib.onEnterMap();
         MapsLib.doSearch();
-        window.location = "#page-map";
+      });
+      $("#search_top").click(function(){
+        MapsLib.onEnterMap();
+        MapsLib.doSearch();
+      });
+
+      window.addEventListener('popstate', function(e) { 
+        MapsLib.onPopState();
       });
   });
 
