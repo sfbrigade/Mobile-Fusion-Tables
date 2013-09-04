@@ -49,24 +49,32 @@ $.extend(MapsLib, {
   // By default, you will get a text field for each column.
   // However, you can customize search settings using the following attributes:
   //
-  //  - allColumns (default=true):            a text field will appear for each column.
+  //  - allColumns (default=true):             a text field will appear for each column.
   //
-  //  - allColumnsExactMatch (default=false): allColumns + exact matching of fields.
+  //  - allColumnsExactMatch (default=false):  allColumns + exact matching of fields.
   //
-  //  - searchByAddress (default=true):       show address field for centering search
-  // 
-  //  - addressScope (format=[City,] STATE):  assume a particular city/state for all address searches
+  //  - addressShow (default=true):            show address field for centering search
+  //
+  //  - addressAutocomplete:                   autocomplete options for address field (set to false if you don't want autocomplete)
+  //     - country (default="US"):             restrict autocomplete to search within said country (2-character country code)
+  //     - useDefaultMapBounds (default=true): addresses within defaultMapBounds (see section 4) will be prioritized to the top of autocomplete results
   // 
   //  - distanceFilter: drop-down for restricting search results by distance to address (or nearby).  Comment this out to have no such drop-down.
   //     - filterSearchResults (default=true): limit search results to those within distance
-  //     - filterListResults (default=true): limit list results to those within distance (otherwise they're just ordered nearest-first)
-  //     - dropDown: array of drop-down options for distance from address
-  //       - Each entry is an array of [zoom level, label for drop-down, true if default selection]
-  //       - You can specify zoom level 0 for an option to not filter by distance, and leave zoom as-is.
+  //     - filterListResults (default=true):   limit list results to those within distance (otherwise they're just ordered nearest-first)
+  //     - dropDown:                           array of drop-down entries for distance from address.  Each entry is an array of:
+  //          1. drop-down text
+  //          2. radius length as "X miles" or "X meters" if the drop-down text wasn't already in this format.
+  //          3. true if this is the default selection
+  //       - You can specify "0" for radius length to not filter by distance, and leave zoom as-is.
   //
   //  - dropDowns: array of custom drop-downs, where an entry has the following attributes:
   //       - label
-  //       - options: array of drop-down entries.  Each entry is an array of [label, Fusion Table SQL-style WHERE clause, true if default selection]
+  //       - options: array of drop-down entries.  Each entry is an array of:
+  //          1. drop-down text
+  //          2. Fusion Table SQL-style WHERE clause
+  //             - see https://developers.google.com/fusiontables/docs/v1/sql-reference for Fusion Table-friendly WHERE clauses
+  //          3. true if this is the default selection
   //
   //  - columns: array of column fields, where a field has the following attributes:
   //       - label
@@ -78,9 +86,7 @@ $.extend(MapsLib, {
   //  Fields for numerical columns use exact match- they have no support for contains match.
   //    (Create a drop-down to search within ranges in numerical value.)
 
-  searchPage: {
-      addressScope: "San Francisco, CA"
-  },
+  //searchPage: {},
 
 
   ///////////////////////
@@ -105,32 +111,53 @@ $.extend(MapsLib, {
     .infobox-header { display:inline; text-transform:uppercase; padding-right: 10px; } \
   ",
 
-  // Handlebars template using the following variables:
+  // customInfoboxHtml can be defined as a string or a function:
+  //  STRING:   You can embed Handlebars expressions and variables.
+  //  FUNCTION: Returns an HTML string and takes two params: row and isListView
+  //  "":       No infobox.
+  //  Default (leaving it undefined): falls back on the infobox format from Fusion Table
+  //
+  //  In either case, the variables are defined as follows:
   //  - row.COLUMN_NAME, returns value for given column in your FusionTable row
   //      - Note: COLUMN_NAME has periods omitted, and spaces replaced with underscores
-  //      - So to get a value in the "U.S. Entity Type" column, use row.US_Entity_Type
+  //      - Example: to get the value from the "U.S. Entity Type" column, use row.US_Entity_Type
   //  - isListView, which evaluates to:
   //      - false when populating a map infobox
-  //      - true when populating an entry in "List" view
+  //      - true when populating a row in the "List" view
 
-  // Set this to "" if you don't want infoboxes.
-  // Comment out completely to fall back on the infobox format from Fusion Table
-  customInfoboxTemplate: ' \
-          {{#if isListView}} \
-            <div> \
-          {{else}} \
-            <div class="infobox-map"> \
-          {{/if}} \
-          <h4 class="infobox-header">{{row.Financial_Institution}}</h4> \
-          <p class="ui-li-desc infobox-subheader"> \
-          <strong>{{row.Branch_Name}} Branch</strong></p> \
-          <p class="ui-li-desc">{{row.Address}} \
-          {{#if isListView}} \
-          {{else}} \
-            <br><a href="tel:1{{row.Phone_Numbers}}">{{row.Phone_Numbers}}</a> \
-          {{/if}} \
-          </p></div>',
+  // here's the FUNCTION version
+  customInfoboxHtml: function(row, isListView) {
+    var html = isListView ? '<div>' : '<div class="infobox-map">';
+    html += '<h4 class="infobox-header">' + row.Financial_Institution + '</h4>';
+    html += '<p class="ui-li-desc infobox-subheader">';
+    html += '<strong>' + row.Branch_Name + ' Branch</strong></p>';
+    html += '<p class="ui-li-desc">' + row.Address;
+    if (!isListView) 
+    {
+      html += '<br><a href="tel:1' + row.Phone_Numbers + '">' + row.Phone_Numbers + '</a>'; 
+    }
+    html += '</p></div>';
+    return html;
+  },
 
+  // here's the equivalent STRING version with Handlebars
+/*
+  customInfoboxHtml: ' \
+    {{#if isListView}} \
+      <div> \
+    {{else}} \
+      <div class="infobox-map"> \
+    {{/if}} \
+    <h4 class="infobox-header">{{row.Financial_Institution}}</h4> \
+    <p class="ui-li-desc infobox-subheader"> \
+    <strong>{{row.Branch_Name}} Branch</strong></p> \
+    <p class="ui-li-desc">{{row.Address}} \
+    {{#if isListView}} \
+    {{else}} \
+      <br><a href="tel:1{{row.Phone_Numbers}}">{{row.Phone_Numbers}}</a> \
+    {{/if}} \
+    </p></div>',
+*/
 
   // Infoboxes will also appear (unless blank) on your nearby or search address pins.
   // HTML is OK.  Use "{address}" to denote the entered address for addressPinInfobox.
@@ -145,31 +172,35 @@ $.extend(MapsLib, {
   // NOTE: if you have "latitude" and "longitude" columns, just use "latitude"
   //locationColumn:     "Address",
 
-  // Center that your map defaults to
-  mapDefaultCenter: new google.maps.LatLng(37.77, -122.45), // center of San Francisco
+  // Bounds and center that your map defaults to when location services are off.
+  // If useDefaultMapBounds is true (see section 2), this also determines which addresses get priority with autocomplete
+  defaultMapBounds: {
 
-  // Using Fusion Table's "zoom" levels, where X+1 zooms in to half the radius of X.
-  // A zoom level of 14 = radius of 1 mile visible on an iPhone
-  defaultZoom: 11,    // zoom level when using mapDefaultCenter
+    // Use [latitude, longitude] or address
+    center: "San Francisco, CA",
 
+    // "X miles" or "X meters"
+    radius: "6 miles"
+  },
+  
   // Set useNearbyLocation to false if you don't want to get the user's location.
   useNearbyLocation: {
-    startAtNearbyLocation:  true,
+    startAtNearbyLocation:      true,
 
-    // onlyIfWithin: (comment out if you always want to use nearby location)
-    // "X miles" or "X meters" = if we're within this distance from mapDefaultCenter, use nearby location.
-    //                           otherwise, post boundsExceededMessage (if exists) and use mapDefaultCenter.
-    onlyIfWithin:           "6 miles",
-    boundsExceededMessage:  "Your location is far away from San Francisco.  Defaulting to city limits.",
+    // If true: use nearby location only if we're within default map bounds
+    //          otherwise, post boundsExceededMessage (if non-empty) and use mapDefaultCenter.
+    onlyWithinDefaultMapBounds: true,
+    boundsExceededMessage:      "Your location is far away from San Francisco.  Defaulting to city limits.",
 
-    // start at this zoom if starting at nearby location
-    nearbyZoom:             14,
+    // use this zoom radius if starting at nearby location
+    nearbyZoomRadius:           "2 miles",
 
-    // Snap to nearby zoom level when user hits "Nearby"?  Options are:
-    // true               = always snap to zoom level
-    // false (default)    = never snap to zoom level
-    // int                = snap to zoom level if current zoom is more then specified levels away (X level = 2^X magnitude)
-    snapToNearbyZoom:       3
+    // Snap to nearby zoom radius when user hits "Nearby"?  Options are:
+    // true             = always snap to zoom level
+    // false (default)  = never snap to zoom level
+    // int              = snap to zoom level if ratio between current and nearby zoom radii
+    //                      is greater than this (in either direction)
+    snapToNearbyZoomIfRatioGreaterThan: 8
   }
 
 });
