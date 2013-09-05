@@ -1,7 +1,7 @@
 Mobile Fusion Tables
 ====================
 
-This is a mobile-ready template using Google Maps and Fusion Tables, based on Derek Eder's [Fusion Table Searchable Map Template](https://github.com/derekeder/FusionTable-Map-Template).
+This is a mobile-ready template using Fusion Tables and jQuery Mobile, based on Derek Eder's [Fusion Table Searchable Map Template](https://github.com/derekeder/FusionTable-Map-Template).
 
 Demos
 -----
@@ -13,15 +13,22 @@ Demos
 - SFCTA Projects: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-MyStreetSF.html
 
 
+Demo Using Your Own Fusion Table
+--------------------------------
+Go to http://codeforsanfrancisco.org/Mobile-Fusion-Tables and enter your Fusion Table ID to see what your data will look like with Mobile Fusion Tables.
+
+(Note that you'll be seeing it with default settings- see below for customizing it to your own needs.)
+
+
 Setup
 -----
 
-**To use this template for your own Fusion Table data:**
+**To create your own web app with Mobile Fusion Tables:**
 
 1. Clone this repository.
 2. Replace the FusionTable ID at the top of fusiontable_settings.js to point to your own table.
 
-That's it.  You now have a working site that uses your own table's data, title, description, and infobox style, with a search field for each column.  Once you open the webpage on your device and hit "Add to Home Screen", you should have something that looks and feels like a mobile app.
+That's it.  You now have a working site that's equivalent to the above demo.  It uses your own table's data, title, description, and infobox content, with a search field or range slider for each column.  Once you open the webpage on your device and hit "Add to Home Screen", you should have something that looks and feels like a mobile app.
 
 If you want to make your app even sexier, explore the rest of the settings file to customize your content and behavior.  See the "samples" folder to see how the above demos were customized. 
 
