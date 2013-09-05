@@ -1,22 +1,11 @@
-/*!
- * Customization file for Fusion Table Mobile Templates
- * See maps_lib.js for license and repository
- *
- * REPLACE THE SETTINGS BELOW TO REFER TO YOUR OWN DATA.
- *
- * Required:
- * 1. Fusion Table IDs
- *
- * Overrides (optional):
- * 2. Search Settings
- *   - Default is a field for every column if you don't set this
- * 3. Custom Content
- *   - Title
- *   - About Page
- *   - Infobox (popup when you click on a location)
- * 4. Map Preferences
- *   - How It Should Use Your Nearby Location
- */
+/*
+  IF YOU CLONE THIS BRANCH,
+  YOU'RE GOING TO HAVE A BAD TIME.
+
+  Please clone the master branch instead.
+  This branch is for demonstration purposes only and isn't set up
+  for making your own app from the template.
+*/
 
 var MapsLib = MapsLib || {};
 
