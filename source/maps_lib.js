@@ -1025,9 +1025,9 @@ $.extend(MapsLib, {
       MapsLib.updateTitle();
     }
 
-    if (MapsLib.aboutPage == undefined && json["description"].length > 0)
+    if (MapsLib.aboutPage == undefined && "description" in json && json.description.length > 0)
     {
-      $("#section-about").html(json["description"].replace(/\n/g,"<br/>"));
+      $("#section-about").html(json.description.replace(/\n/g,"<br/>"));
     }
 
     var all_columns = [];
