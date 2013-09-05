@@ -891,7 +891,7 @@ $.extend(MapsLib, {
         // Generate own infoboxContent, ignoring location column and empty values.
         infoboxContent = isListView ? '<div class="infobox-container">' : '<div class="googft-info-window">';
         infoboxContent += '<p class="infobox-default">';
-        var limit = 4; // limit 4 lines per entry
+        var limit = isListView ? 4 : 10; // limit number of lines in box
         var ix = 0;
         $.each(MapsLib.variantColumns, function(i, col) {
           var val = safe_row[col];
