@@ -15,7 +15,7 @@ Demos
 
 Demo Using Your Own Fusion Table
 --------------------------------
-Go to http://codeforsanfrancisco.org/Mobile-Fusion-Tables and enter your Fusion Table ID to see what your data will look like with Mobile Fusion Tables.
+Go to http://codeforsanfrancisco.org/Mobile-Fusion-Tables and enter your Fusion Table URL (or ID) to see what your data will look like with Mobile Fusion Tables.
 
 (Note that you'll be seeing it with default settings- see below for customizing it to your own needs.)
 
