@@ -28,6 +28,7 @@ $.extend(MapsLib, {
   dateColumns:        [],
   rangeColumns:       [],
   columnRanges:       {},
+  variantColumns:     [], // excluding columns where the min/max are the same
   outstandingQueries: 0,
 
   // map overrides
@@ -167,9 +168,10 @@ $.extend(MapsLib, {
         minVal: minMaxHelper(json["rows"][0][i]),
         maxVal: minMaxHelper(json["rows"][0][i+1])
       }
-      range.diffVal = MapsLib.safeNum(range.maxVal) - MapsLib.safeNum(range.minVal);
-      range.minSlideVal = range.minVal;
-      range.maxSlideVal = range.maxVal;
+      if (MapsLib.safeNum(range.maxVal) != MapsLib.safeNum(range.minVal))
+      {
+        MapsLib.variantColumns.push(MapsLib.safeField(colname));
+      }
       MapsLib.columnRanges[colname] = range;
     }
     if (--MapsLib.outstandingQueries <= 0)
@@ -886,20 +888,19 @@ $.extend(MapsLib, {
       }
       else
       {
-        // Generate one infoboxContent, ignoring location column and empty values.
+        // Generate own infoboxContent, ignoring location column and empty values.
         infoboxContent = isListView ? '<div class="infobox-container">' : '<div class="googft-info-window">';
         infoboxContent += '<p class="infobox-default">';
         var limit = 4; // limit 4 lines per entry
         var ix = 0;
-        for (var col in safe_row)
-        {
+        $.each(MapsLib.variantColumns, function(i, col) {
           var val = safe_row[col];
-          if (val == null || val == "") continue;
-          if (col == MapsLib.locationColumn) continue;
-          if (col == "longitude") continue; // HACK: latitude implies there's also a longitude column
+          if (val == null || val == "") return true;
+          if (col == MapsLib.locationColumn) return true;
+          if (col == "longitude") return true; // HACK: latitude implies there's also a longitude column
           infoboxContent += "<b>" + col + ":</b> " + val + "<br/>";
-          if (++ix >= limit) break;
-        }
+          if (++ix >= limit) return false;
+        });
         infoboxContent += "</p></div>";
       }
     }
@@ -1097,8 +1098,11 @@ $.extend(MapsLib, {
     var columnsToCheck = (MapsLib.searchPage.allColumns) ? MapsLib.all_columns : MapsLib.searchPage.columns;
     $.each(MapsLib.columns, function(i, column)
     {
-      if ($.inArray(column, MapsLib.numericalColumns) == -1 && $.inArray(column, MapsLib.dateColumns) == -1) return true;
-
+      if ($.inArray(column, MapsLib.numericalColumns) == -1 && $.inArray(column, MapsLib.dateColumns) == -1) 
+      {
+        MapsLib.variantColumns.push(MapsLib.safeField(column));
+        return true;
+      }
       var cIndex = $.inArray(column, customColumns);
       if (cIndex >= 0)
       {
