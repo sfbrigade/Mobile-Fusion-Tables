@@ -1037,7 +1037,7 @@ $.extend(MapsLib, {
     //   lat(itude) > geometry > addr(ess) > any other location column
     //   allow for contains-match (except for lat)
     var setLocation = (MapsLib.locationColumn == "");
-    var locPriorites = {addr: 1, geometry: 2, latitude: 3}; // higher value takes address priority
+    var locPriorites = {location: 1, addr: 2, geometry: 3, latitude: 4}; // higher value takes address priority
     var foundPriority = 0;
     for (var i = 0; i < num_columns; i++)
     {
