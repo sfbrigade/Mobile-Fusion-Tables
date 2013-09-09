@@ -1224,15 +1224,31 @@ $.extend(MapsLib, {
             }
             else if (MapsLib.locationColumn.toLowerCase().indexOf("geometry") != -1)
             {
-              // HACK: can't seem to get a center point if map uses "geometry" polygons.  Just grab a corner instead.
               // There's a number of ways to get lng/lat from a geo (can be a point, a line, a polygon).
               var geo = row[MapsLib.locationColumn].value;
               var lnglat = ("geometries" in geo) ? geo.geometries[0].coordinates : geo.geometry.coordinates;
+              var parent = lnglat;
               while (lnglat[0] instanceof Array)
               {
+                parent = lnglat;
                 lnglat = lnglat[0];
               }
-              MapsLib.queueInfobox = new google.maps.LatLng(lnglat[1], lnglat[0]);
+              if (parent[0] instanceof Array)
+              {
+                // has mutiple points, get center of line/polygon
+                var latsum = 0;
+                var lngsum = 0;
+                $.each(parent, function(i, coord)
+                {
+                  latsum += coord[1];
+                  lngsum += coord[0];
+                });
+                MapsLib.queueInfobox = new google.maps.LatLng(latsum/parent.length, lngsum/parent.length);
+              }
+              else
+              {
+                MapsLib.queueInfobox = new google.maps.LatLng(lnglat[1], lnglat[0]);
+              }
               options["position"] = MapsLib.queueInfobox;
               MapsLib.infoWindow.setOptions(options);
             }
