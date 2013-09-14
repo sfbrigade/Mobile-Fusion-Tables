@@ -17,6 +17,7 @@ $.extend(MapsLib, {
   maxDistanceFromDefaultCenter: 0,
   nearbyZoomThreshold:-1,
   searchRadiusCircle: null,
+  userPosition:       null,
   nearbyPosition:     null,
   overrideCenter:     false, 
   ignoreIdle:         false,
@@ -263,12 +264,16 @@ $.extend(MapsLib, {
         MapsLib.geocoder.geocode( { 'address': address }, function(results, status) {
           if (status == google.maps.GeocoderStatus.OK) {
             MapsLib.defaultMapBounds.center = results[0].geometry.location;
-            if (MapsLib.nearbyPosition == null)
+            if (MapsLib.userPosition == null)
             {
               MapsLib.currentPinpoint = MapsLib.defaultMapBounds.center;
               MapsLib.map.setCenter(MapsLib.defaultMapBounds.center);
               MapsLib.map.setZoom(MapsLib.defaultZoom);
               MapsLib.map_centroid = MapsLib.defaultMapBounds.center;
+            }
+            else
+            {
+              updateCenter(MapsLib.userPosition);
             }
           }
         });
@@ -386,6 +391,7 @@ $.extend(MapsLib, {
 
     updateCenter = function(userPosition) {
       var useNearbyPosition = true;
+      MapsLib.userPosition = userPosition;
 
       // don't follow user if maxDistanceFromDefaultCenter is 0
       if (!MapsLib.useNearbyLocation || userPosition == null)
