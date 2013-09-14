@@ -541,16 +541,19 @@ $.extend(MapsLib, {
       }
       MapsLib.autocomplete = new google.maps.places.Autocomplete($("#search_address")[0], options);
     }
-    // dismiss keyboard when user hits return in input fields
-    $('input').keypress( function( e ) {
-      var code = e.keyCode || e.which;
-      if( code === 13 ) {
-        e.preventDefault();
-        document.activeElement.blur();
-        $('input').blur();
-        return false; 
-      }
-    })
+    if ('ontouchstart' in window || 'onmsgesturechange' in window)
+    {
+      // Touch screens only: dismiss keyboard when user hits return in input fields
+      $('input').keypress( function( e ) {
+        var code = e.keyCode || e.which;
+        if( code === 13 ) {
+          e.preventDefault();
+          document.activeElement.blur();
+          $('input').blur();
+          return false; 
+        }
+      })
+    }
   },
 
   // RECURSIVE HACK: There's a race condition between Google Maps and JQuery Mobile
@@ -614,12 +617,27 @@ $.extend(MapsLib, {
       var field_id = MapsLib.safeField(cdata.label);
       html.push("<hr><label for='sc_" + field_id + "'>" + cdata.label + ":</label>");
       html.push("<select data-ref='custom' id='sc_" + field_id + "' name=''>");
+      var template = cdata.template;
       var options = cdata.options;
       for (var j=0; j<options.length; j++)
       {
         var option = options[j];
-        var selected = (option.length > 2 && option[2] == true) ? " selected='selected'" : "";
-        html.push('<option value="' + option[1] + '"' + selected + ">" + option[0] + "</option>");
+        if (option instanceof Array)
+        {
+          if (option.length > 1)
+          {
+            var selected = (option.length > 2 && option[2] == true) ? " selected='selected'" : "";
+            html.push('<option value="' + option[1] + '">' + option[0] + "</option>");
+          }
+          else if (MapsLib.stringExists(template))
+          {
+            html.push('<option value="' + template.replace(/{text}/g,option[0]) + '"' + selected + ">" + option[0] + "</option>");
+          }
+        }
+        else if (MapsLib.stringExists(template))
+        {
+          html.push('<option value="' + template.replace(/{text}/g,option) + '">' + option + "</option>");
+        }
       }
       html.push("</select>");
     });
@@ -861,6 +879,18 @@ $.extend(MapsLib, {
     {
       var safekey = MapsLib.safeField(key);
       var safevalue = $(document.createElement('div')).html(row[key].value).text().replace(MapsLib.unicodeSet, ""); // using jQuery to decode "&amp;"->"&" and so on
+      if (MapsLib.delimitedColumns != undefined && key in MapsLib.delimitedColumns)
+      {
+        // split value by delimiter
+        if (safevalue.length == 0)
+        {
+          safevalue = [];
+        }
+        else
+        {
+          safevalue = safevalue.split(MapsLib.delimitedColumns[key]);
+        }
+      }
       safe_row[safekey] = safevalue;
     }
 
