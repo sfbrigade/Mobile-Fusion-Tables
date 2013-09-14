@@ -29,7 +29,7 @@ var MapsLib = MapsLib || {};
   // See https://developers.google.com/fusiontables/docs/v1/migration_guide for more info
 
   // The encrypted Table ID of your Fusion Table (found under File => About)
-  MapsLib.fusionTableId = "1kjZeEXWdu2NmsWKFnMoqek4f0EV-dVIJjxMHg6w";
+  MapsLib.fusionTableId = "13xmU6wANRJb0Niqcdz5Tr0xWh4AyV0yN10xMxPc";
 
   // *New Fusion Tables Requirement* API key. found at https://code.google.com/apis/console/
   // *Important* this key is for demonstration purposes. please register your own.
@@ -72,9 +72,11 @@ $.extend(MapsLib, {
   //       - label
   //       - options: array of drop-down entries.  Each entry is an array of:
   //          1. drop-down text
-  //          2. Fusion Table SQL-style WHERE clause
+  //          2. Fusion Table SQL-style WHERE clause (overrides template)
   //             - see https://developers.google.com/fusiontables/docs/v1/sql-reference for Fusion Table-friendly WHERE clauses
   //          3. true if this is the default selection
+  //       - template (optional): template for WHERE clause, using {text} to insert drop-down text
+  //         NOTE: if you use a template, a drop-down entry can be just the drop-down text instead of an array.
   //
   //  - columns: array of column fields, where a field has the following attributes:
   //       - label
@@ -89,7 +91,7 @@ $.extend(MapsLib, {
   searchPage: { 
     allColumns: false,
     distanceFilter: { 
-      dropDown: [ ["Anywhere", "0"], ["2 blocks", "400 meters", true], ["1/2 mile", ".5 miles"], ["1 mile"], ["2 miles"] ]
+      dropDown: [ ["Anywhere", "0", true], ["2 blocks", "400 meters"], ["1/2 mile", ".5 miles"], ["1 mile"], ["2 miles"] ]
     },
     dropDowns: [ 
       { label: "Rating Filter", options: [
@@ -99,7 +101,11 @@ $.extend(MapsLib, {
         ["Needs Improvement", "'last_score' > 70 AND 'last_score' <= 85"],
         ["Poor", "'last_score' <= 70 AND 'last_score' > 0"]
       ] }
-    ]
+    ],
+    columns: [
+      {label: "Name", column: "name"},
+      {label: "Violations", column: "violations"}
+    ],
   },
 
 
@@ -120,13 +126,13 @@ $.extend(MapsLib, {
   // This will go in your style block.  Useful if customizing your infoboxes.
   customCSS: " \
     .infobox-header, .ui-li-desc, #score-text { font-family: Arial, Helvetica, Geneva, sans-serif; white-space:normal;} \
-    .infobox-map { width:220px; } \
+    .infobox-map { width:220px; height:100px;} \
     .infobox-header { display:inline; padding-right: 10px; } \
     .infobox-subheader { padding-top: 5px; } \
     .moreinfo { margin-left:7px; min-width:18px; position:absolute; \
         top:45%; bottom:45%; min-height:18px; } \
     .score { float:left; font-size:medium; padding:5px; border:1px solid black; margin:2px 7px 5px 0px; } \
-    .score.grn_blank { background-color: #00de3c; color:white; } \
+    .score.grn_blank { background-color: #00de3c; color: white; } \
     .score.ltblu_blank { background-color: #55d7d7; color: white; } \
     .score.orange_blank { background-color: #ff9c00; color: white; } \
     .score.red_blank { background-color: #fb6155; color: white; } \
@@ -146,6 +152,9 @@ $.extend(MapsLib, {
   //      - false when populating a map infobox
   //      - true when populating a row in the "List" view
 
+  // delimitedColumns (optional): specify delimiter per column, and row.COLUMN_NAME will return an array
+  delimitedColumns: {"violations": ";"},
+
   customInfoboxHtml: " \
     {{#if isListView}} \
       <div> \
@@ -161,16 +170,12 @@ $.extend(MapsLib, {
       <strong>Last inspected: {{row.last_inspection_date}}</strong> \
       <br>{{row.address}}</p> \
       <p class='ui-li-desc infobox-subheader'><b>Recent violations:</b> \
-      {{#if row.violation_1}} \
-        <br>- {{row.violation_1}} \
+      {{#if row.violations}} \
+        {{#each row.violations}} \
+          <br>- {{this}} \
+        {{/each}} \
       {{else}} \
         None \
-      {{/if}} \
-      {{#if row.violation_2}} \
-        <br>- {{row.violation_2}} \
-      {{/if}} \
-      {{#if row.violation_3}} \
-        <br>- {{row.violation_3}} \
       {{/if}} \
     {{/if}} \
     </p></div>",

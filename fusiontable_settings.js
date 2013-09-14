@@ -18,11 +18,11 @@ var MapsLib = MapsLib || {};
   // See https://developers.google.com/fusiontables/docs/v1/migration_guide for more info
 
   // The encrypted Table ID of your Fusion Table (found under File => About)
-  MapsLib.fusionTableId = "1GBiESlYt_Lc9O5PLuLaii1L74HeY7G4O1fMh9OE";
+  MapsLib.fusionTableId = "13xmU6wANRJb0Niqcdz5Tr0xWh4AyV0yN10xMxPc";
 
   // *New Fusion Tables Requirement* API key. found at https://code.google.com/apis/console/
-  // *Important* this key is for demonstration purposes. please register your own!
-  MapsLib.googleApiKey = "AIzaSyAMVBSXes-6P-gWaxRj20GK8NT6WDVpozM";
+  // *Important* this key is for demonstration purposes. please register your own.
+  MapsLib.googleApiKey ="AIzaSyAMVBSXes-6P-gWaxRj20GK8NT6WDVpozM";
 
 
   // DONE!  YOU COULD DELETE EVERYTHING AFTER THIS POINT AND STILL HAVE A WORKING APP.
@@ -33,11 +33,12 @@ var MapsLib = MapsLib || {};
 
 $.extend(MapsLib, {
 
+/*
+
   ////////////////////////
   // 2. SEARCH SETTINGS //
   ////////////////////////
-
-/*    
+  
   // By default, you will get a text field for each column.
   // However, you can customize search settings using the following attributes:
   //
@@ -64,9 +65,11 @@ $.extend(MapsLib, {
   //       - label
   //       - options: array of drop-down entries.  Each entry is an array of:
   //          1. drop-down text
-  //          2. Fusion Table SQL-style WHERE clause
+  //          2. Fusion Table SQL-style WHERE clause (overrides template)
   //             - see https://developers.google.com/fusiontables/docs/v1/sql-reference for Fusion Table-friendly WHERE clauses
   //          3. true if this is the default selection
+  //       - template (optional): template for WHERE clause, using {text} to insert drop-down text
+  //         NOTE: if you use a template, a drop-down entry can be just the drop-down text instead of an array.
   //
   //  - columns: array of column fields, where a field has the following attributes:
   //       - label
@@ -81,19 +84,21 @@ $.extend(MapsLib, {
   searchPage: { 
     allColumns: false,
     distanceFilter: { 
-      dropDown: [ ["Anywhere", "0", true], ["2 miles"], ["8 miles"], ["100 miles"], ["500 miles"] ]
+      dropDown: [ ["Anywhere", "0", true], ["2 blocks", "400 meters"], ["1/2 mile", ".5 miles"], ["1 mile"], ["2 miles"] ]
     },
     dropDowns: [ 
-      { label: "Organization Type", options: [
-        ["Any", "", true],
-        [".gov", "'Grantee Organization Type Description' = 'U.S. Government Entity'"],
-        [".com", "'Grantee Organization Type Description' = 'Corporate Entity, Federal Tax Exempt'"],
-        [".org", "'Grantee Organization Type Description' NOT EQUAL TO 'Corporate Entity, Federal Tax Exempt' AND 'Grantee Organization Type Description' NOT EQUAL TO 'U.S. Government Entity'"]
+      { label: "Rating Filter", options: [
+        ["Any Rating", "'last_score' > 0", true],
+        ["Good", "'last_score' > 90"],
+        ["Adequate", "'last_score' > 85 AND 'last_score' <= 90"],
+        ["Needs Improvement", "'last_score' > 70 AND 'last_score' <= 85"],
+        ["Poor", "'last_score' <= 70 AND 'last_score' > 0"]
       ] }
-    ]
-    ,columns: [
-      { label: "Name", column: "Name", exact_match: false }
-    ]
+    ],
+    columns: [
+      {label: "Name", column: "name"},
+      {label: "Violations", column: "violations"}
+    ],
   },
 */
 
@@ -104,31 +109,28 @@ $.extend(MapsLib, {
 
 /*
   // Title bar (including title of website)
-  title: "U.S. Health Centers",
+  title: "SF Food Inspections",
 
   // Contents of the About Page.  You can use "{title}" to insert your title.
   aboutPage: " \
     <h3>About {title}</h3> \
-    <p>This is a demonstration of a Mobile Template using Fusion Tables.  Developed by SF Brigade for Code For America, it's an adaptation of Derek Eder's searchable Fusion Table template, licensed under the <a href='https://github.com/derekeder/FusionTable-Map-Template/wiki/License' target='_blank'>MIT License</a>.  This particular application uses data from the <a href='http://datawarehouse.hrsa.gov/Download_HCC_LookALikes.aspx' target='_blank'>HRSA</a>.</p> \
+    <p>This is a demonstration of a Mobile Template using Fusion Tables.  Developed by SF Brigade for Code For America, it's an adaptation of Derek Eder's searchable Fusion Table template, licensed under the <a href='https://github.com/derekeder/FusionTable-Map-Template/wiki/License' target='_blank'>MIT License</a>.  This particular application uses health inspection data for businesses in San Francisco.</p> \
     <p>To use this template for your own Fusion Table data, <a href='https://github.com/sfbrigade/Mobile-Fusion-Tables' target='_blank'>clone this repository</a> and replace the fields inside fusiontable_settings.js to match your content.</p> \
     ",
 
   // This will go in your style block.  Useful if customizing your infoboxes.
   customCSS: " \
-    .infobox-header, .ui-li-desc, #entity-text { font-family: Arial, Helvetica, Geneva, sans-serif; white-space:normal;} \
-    .infobox-subheader { padding-top: 5px; } \
-    .infobox-map { width:220px; } \
+    .infobox-header, .ui-li-desc, #score-text { font-family: Arial, Helvetica, Geneva, sans-serif; white-space:normal;} \
+    .infobox-map { width:220px; height:100px;} \
     .infobox-header { display:inline; padding-right: 10px; } \
+    .infobox-subheader { padding-top: 5px; } \
     .moreinfo { margin-left:7px; min-width:18px; position:absolute; \
         top:45%; bottom:45%; min-height:18px; } \
-    .entity { float:left; font-size:medium; padding:5px; border:1px solid black; margin:2px 7px 5px 0px; } \
-    .entity.blue_box { display: none; background-color: #0060ed; color: white; } \
-    .entity.red_box { display: none; background-color: #fb6155; color: white; } \
-    .entity.orange_box { background-color: #ff9c00; color: white; } \
-    .entity.blue_box.Government { display: inherit; } \
-    .entity.red_box.Corporate { display: inherit; } \
-    .entity.orange_box.Government { display: none; } \
-    .entity.orange_box.Corporate { display: none; } \
+    .score { float:left; font-size:medium; padding:5px; border:1px solid black; margin:2px 7px 5px 0px; } \
+    .score.grn_blank { background-color: #00de3c; color: white; } \
+    .score.ltblu_blank { background-color: #55d7d7; color: white; } \
+    .score.orange_blank { background-color: #ff9c00; color: white; } \
+    .score.red_blank { background-color: #fb6155; color: white; } \
   ",
 
   // customInfoboxHtml can be defined as a string or a function:
@@ -145,30 +147,33 @@ $.extend(MapsLib, {
   //      - false when populating a map infobox
   //      - true when populating a row in the "List" view
 
-  customInfoboxHtml: ' \
+  // delimitedColumns (optional): specify delimiter per column, and row.COLUMN_NAME will return an array
+  delimitedColumns: {"violations": ";"},
+
+  customInfoboxHtml: " \
     {{#if isListView}} \
       <div> \
     {{else}} \
-      <div class="infobox-map"> \
+      <div class='infobox-map'> \
     {{/if}} \
-    <div class="entity blue_box {{row.Grantee_Organization_Type_Description}}"><span id="entity-text">.gov</span></div> \
-    <div class="entity red_box {{row.Grantee_Organization_Type_Description}}"><span id="entity-text">.com</span></div> \
-    <div class="entity orange_box {{row.Grantee_Organization_Type_Description}}"><span id="entity-text">.org</span></div> \
-    <h4 class="infobox-header">{{row.Name}}</h4> \
+    <div class='score {{row.last_score_category}}'><span id='score-text'>{{row.last_score}}</span></div> \
+    <h4 class='infobox-header'>{{row.name}}</h4> \
+    <p class='ui-li-desc infobox-subheader'> \
     {{#if isListView}} \
-      <p class="ui-li-desc infobox-subheader"> \
-      {{row.Grantee_Organization_Type_Description}}<br> \
-      {{row.Address}}</p> \
+      {{row.address}}</p> \
     {{else}} \
-      <p></p><p class="ui-li-desc"> \
-      {{row.Grantee_Organization_Type_Description}}<br> \
-      {{row.Address}}<br> \
-      {{#if row.URL}} \
-        <a href="{{row.URL}}" target="_blank">{{row.URL}}</a><br> \
+      <strong>Last inspected: {{row.last_inspection_date}}</strong> \
+      <br>{{row.address}}</p> \
+      <p class='ui-li-desc infobox-subheader'><b>Recent violations:</b> \
+      {{#if row.violations}} \
+        {{#each row.violations}} \
+          <br>- {{this}} \
+        {{/each}} \
+      {{else}} \
+        None \
       {{/if}} \
-      <a href="tel:1{{row.Telephone_Number}}">{{row.Telephone_Number}}</a></p> \
     {{/if}} \
-    </p></div>',
+    </p></div>",
 
   // Infoboxes will also appear (unless blank) on your nearby or search address pins.
   // HTML is OK.  Use "{address}" to denote the entered address for addressPinInfobox.
@@ -184,19 +189,19 @@ $.extend(MapsLib, {
 /*
   // Override the location column in your Fusion Table (useful if you have multiple columns)
   // NOTE: if you have "latitude" and "longitude" columns, just use "latitude"
-  locationColumn:     "Address",
+  //locationColumn:     "latitude",
 
-  // Bounds and center that your map defaults to when location services are off.
+  // Center and zoom radius that your map defaults to when location services are off.
   // If useDefaultMapBounds is true (see section 2), this also determines which addresses get priority with autocomplete
   defaultMapBounds: {
 
     // Use [latitude, longitude] or address
-    center: "United States",
+    center: "San Francisco, CA",
 
     // "X miles" or "X meters"
-    radius: "1500 miles"
+    radius: "6 miles"
   },
-  
+
   // Set useNearbyLocation to false if you don't want to get the user's location.
   useNearbyLocation: {
     startAtNearbyLocation:      true,
@@ -207,7 +212,7 @@ $.extend(MapsLib, {
     boundsExceededMessage:      "Your location is far away from San Francisco.  Defaulting to city limits.",
 
     // use this zoom radius if starting at nearby location
-    nearbyZoomRadius:           "32 miles",
+    nearbyZoomRadius:           "200 meters",
 
     // Snap to nearby zoom radius when user hits "Nearby"?  Options are:
     // true             = always snap to zoom level
@@ -216,6 +221,6 @@ $.extend(MapsLib, {
     //                      is greater than this (in either direction)
     snapToNearbyZoomIfRatioGreaterThan: 8
   }
-*/
+  */
 
 });

@@ -72,9 +72,11 @@ $.extend(MapsLib, {
   //       - label
   //       - options: array of drop-down entries.  Each entry is an array of:
   //          1. drop-down text
-  //          2. Fusion Table SQL-style WHERE clause
+  //          2. Fusion Table SQL-style WHERE clause (overrides template)
   //             - see https://developers.google.com/fusiontables/docs/v1/sql-reference for Fusion Table-friendly WHERE clauses
   //          3. true if this is the default selection
+  //       - template (optional): template for WHERE clause, using {text} to insert drop-down text
+  //         NOTE: if you use a template, a drop-down entry can be just the drop-down text instead of an array.
   //
   //  - columns: array of column fields, where a field has the following attributes:
   //       - label
@@ -119,6 +121,10 @@ $.extend(MapsLib, {
   //  - isListView, which evaluates to:
   //      - false when populating a map infobox
   //      - true when populating a row in the "List" view
+
+  // delimitedColumns (optional): specify delimiter per column, and row.COLUMN_NAME will return an array
+  //delimitedColumns: {},
+
   //customInfoboxHtml: "",
 
   // Infoboxes will also appear (unless blank) on your nearby or search address pins.
