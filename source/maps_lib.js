@@ -35,6 +35,7 @@ $.extend(MapsLib, {
   // map overrides
   useNearbyLocation:  MapsLib.useNearbyLocation || {},
   locationColumn:     MapsLib.locationColumn || "",
+  secondaryLocationColumn: "",
   defaultMapBounds:   {},
   map_centroid:       new google.maps.LatLng(37.77, -122.45), // center on SF if all else fails
   defaultZoom:        9,
@@ -230,6 +231,25 @@ $.extend(MapsLib, {
       css.type = "text/css";
       css.innerHTML = MapsLib.customCSS;
       document.head.appendChild(css);
+    }
+
+    // set default secondary location column
+    switch (MapsLib.locationColumn)
+    {
+      case "latitude":
+        MapsLib.secondaryLocationColumn = "longitude";
+        break;
+      case "Latitude":
+        MapsLib.secondaryLocationColumn = "Longitude";
+        break;
+      case "lat":
+        MapsLib.secondaryLocationColumn = "lng";
+        break;
+      case "Lat":
+        MapsLib.secondaryLocationColumn = "Lng";
+        break;
+      default:
+        break;
     }
 
     // fill in defaults for searchPage settings
@@ -1073,13 +1093,22 @@ $.extend(MapsLib, {
     //   lat(itude) > geometry > addr(ess) > any other location column
     //   allow for contains-match (except for lat)
     var setLocation = (MapsLib.locationColumn == "");
-    var locPriorites = {location: 1, addr: 2, geometry: 3, latitude: 4}; // higher value takes address priority
+    var locPriorites = {location: 1, addr: 3, geometry: 4, latitude: 2}; // higher value takes address priority
     var foundPriority = 0;
+    var grabNextColumn = false;
+    var secondType = "";
     for (var i = 0; i < num_columns; i++)
     {
       var name = json["columns"][i]["name"];
+      var type = json["columns"][i]["type"];
       all_columns.push(name);
-      switch(json["columns"][i]["type"])
+      if (grabNextColumn)
+      {
+        MapsLib.secondaryLocationColumn = name;
+        secondType = type;
+        grabNextColumn = false;
+      }
+      switch(type)
       {
         case "NUMBER":
           MapsLib.numericalColumns.push(name);
@@ -1096,12 +1125,13 @@ $.extend(MapsLib, {
             for (key in locPriorites)
             {
               var curPriority = locPriorites[key];
-              if ((lname == "lat" && MapsLib.locationColumn != "latitude") ||  // only exact-match for "lat"
+              if ((lname == "lat") ||  // only exact-match for "lat"
                 (lname == key && curPriority >= foundPriority) || // exact-match overrides contains-match
                 (lname.indexOf(key) != -1 && curPriority > foundPriority)) // contains-match if higher priority
               {
                 MapsLib.locationColumn = name;
                 foundPriority = curPriority;
+                grabNextColumn = true;
                 break;
               }
             }
@@ -1109,6 +1139,7 @@ $.extend(MapsLib, {
             {
               // use this location column unless we find a higher-priority column
               MapsLib.locationColumn = name;
+              grabNextColumn = true;
             }
           }
           break;
@@ -1251,9 +1282,9 @@ $.extend(MapsLib, {
             MapsLib.infoWindow.close();
             var row = MapsLib.selectedListRow;
             var options = { content: MapsLib.infoboxContent(row, false) };
-            if (MapsLib.locationColumn.toLowerCase().indexOf("latitude") != -1)
+            if (MapsLib.locationColumn.toLowerCase().indexOf("latitude") != -1 || MapsLib.locationColumn.toLowerCase() == "lat")
             {
-              MapsLib.queueInfobox = new google.maps.LatLng(row.latitude.value, row.longitude.value);
+              MapsLib.queueInfobox = new google.maps.LatLng(row[MapsLib.locationColumn].value, row[MapsLib.secondaryLocationColumn].value);
               options["position"] = MapsLib.queueInfobox;
               options["pixelOffset"] = MapsLib.defaultPixelOffset;
               MapsLib.infoWindow.setOptions(options);

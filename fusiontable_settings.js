@@ -34,12 +34,13 @@ var MapsLib = MapsLib || {};
   // *New Fusion Tables Requirement* API key. found at https://code.google.com/apis/console/
   // *Important* this key is for demonstration purposes. please register your own.
   MapsLib.googleApiKey ="AIzaSyAMVBSXes-6P-gWaxRj20GK8NT6WDVpozM";
-
+  
 
   // DONE!  YOU COULD DELETE EVERYTHING AFTER THIS POINT AND STILL HAVE A WORKING APP.
+  // BELOW ARE CUSTOM OVERRIDES TO MAKE YOUR APP MORE AWESOME.  UNCOMMENT EACH SECTION AS YOU GO.
 
-  // BELOW ARE CUSTOM OVERRIDES TO MAKE YOUR APP MORE AWESOME.
-  // UNCOMMENT EACH SECTION AS YOU GO.
+  // IF YOU GET STUCK, PLEASE VISIT https://github.com/sfbrigade/Mobile-Fusion-Tables
+  // YOU CAN SUBMIT AN ISSUE OR CONTACT AN AUTHOR.
 
 
 $.extend(MapsLib, {
