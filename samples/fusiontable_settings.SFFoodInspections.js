@@ -126,7 +126,7 @@ $.extend(MapsLib, {
   // This will go in your style block.  Useful if customizing your infoboxes.
   customCSS: " \
     .infobox-header, .ui-li-desc, #score-text { font-family: Arial, Helvetica, Geneva, sans-serif; white-space:normal;} \
-    .infobox-map { width:220px; height:100px;} \
+    .infobox-map { width:220px; height:107px;} \
     .infobox-header { display:inline; padding-right: 10px; } \
     .infobox-subheader { padding-top: 5px; } \
     .moreinfo { margin-left:7px; min-width:18px; position:absolute; \
