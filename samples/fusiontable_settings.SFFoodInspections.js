@@ -125,7 +125,7 @@ $.extend(MapsLib, {
 
   // This will go in your style block.  Useful if customizing your infoboxes.
   customCSS: " \
-    .infobox-header, .ui-li-desc, #score-text { font-family: Arial, Helvetica, Geneva, sans-serif; white-space:normal;} \
+    .infobox-header, .ui-li-desc, li, #score-text { font-family: Arial, Helvetica, Geneva, sans-serif; white-space:normal;} \
     .infobox-map { width:220px; height:107px;} \
     .infobox-header { display:inline; padding-right: 10px; } \
     .infobox-subheader { padding-top: 5px; } \
@@ -169,13 +169,14 @@ $.extend(MapsLib, {
     {{else}} \
       <strong>Last inspected: {{row.last_inspection_date}}</strong> \
       <br>{{row.address}}</p> \
-      <p class='ui-li-desc infobox-subheader'><b>Recent violations:</b> \
+      <p class='ui-li-desc infobox-subheader'> \
       {{#if row.violations}} \
+        <b>Recent violations ({{row.violations.length}}):</b> \
         {{#each row.violations}} \
           <br>- {{this}} \
         {{/each}} \
       {{else}} \
-        None \
+        <b>Recent violations:</b> None \
       {{/if}} \
     {{/if}} \
     </p></div>",
