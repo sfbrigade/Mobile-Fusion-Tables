@@ -66,7 +66,7 @@ $.extend(MapsLib, {
   searchPage:         MapsLib.searchPage || {},
   columns:            [],
   in_query:           false, 
-  searchRadius:       0,
+  searchRadiusMeters: 0,
   customSearchFilter: "",
   listViewRows:       [],
   selectedListRow:    null,
@@ -631,9 +631,9 @@ $.extend(MapsLib, {
         var distEntry = distances[i]; // format: [zoom, label, true if selected]
         var label = distEntry[0];
         var zoomstring = (distEntry.length > 1) ? distEntry[1] : distEntry[0];
-        var zoom = MapsLib.zoomFromRadiusMeters(MapsLib.metersFromString(zoomstring));
+        var radiusMeters = MapsLib.metersFromString(zoomstring);
         var selected = (distEntry.length > 2 && distEntry[2] == true) ? " selected='selected'" : "";
-        html.push("<option value='" + zoom + "'" + selected + ">" + label + "</option>");
+        html.push("<option value='" + radiusMeters + "'" + selected + ">" + label + "</option>");
       }
       html.push("</select>");
     }
@@ -765,10 +765,7 @@ $.extend(MapsLib, {
 
     //-----custom filters-------
     var address = $("#search_address").val();
-    MapsLib.searchRadius = (firstSearch == true) ? 0 : $("#search_radius").val()*1;
-    // HACK: search radius was calibrated for min(width,height)=320, so we offset the zoom accordingly
-    var min_diameter = Math.min($(document).width(), $(document).height());
-    var zoomOffset = Math.round(Math.log(min_diameter / 320) / Math.LN2);
+    MapsLib.searchRadiusMeters = (firstSearch == true) ? 0 : $("#search_radius").val()*1;
 
     var whereClauses = [];
     $("input[data-ref='column']").each(function( index ) { 
@@ -821,9 +818,9 @@ $.extend(MapsLib, {
 
           MapsLib.map.setCenter(MapsLib.currentPinpoint);
           MapsLib.map_centroid = MapsLib.currentPinpoint;
-          if (MapsLib.searchRadius > 0)
+          if (MapsLib.searchRadiusMeters > 0)
           {
-            MapsLib.map.setZoom(MapsLib.searchRadius+zoomOffset-1);
+            MapsLib.map.setZoom(MapsLib.zoomFromRadiusMeters(MapsLib.searchRadiusMeters)-1);
           }
 
           MapsLib.safeShow(MapsLib.localMarker, false);
@@ -846,9 +843,9 @@ $.extend(MapsLib, {
               MapsLib.infoWindow.open(MapsLib.map);
             }); 
           }
-          if (MapsLib.searchPage.distanceFilter.filterSearchResults && MapsLib.searchRadius > 0)
+          if (MapsLib.searchPage.distanceFilter.filterSearchResults && MapsLib.searchRadiusMeters > 0)
           {
-            whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadiusMeters() + "))";
+            whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadiusMeters + "))";
             MapsLib.drawSearchRadiusCircle(MapsLib.currentPinpoint);
           }
           MapsLib.submitSearch(whereClause, MapsLib.map, MapsLib.currentPinpoint);
@@ -864,13 +861,13 @@ $.extend(MapsLib, {
       MapsLib.currentPinpoint = MapsLib.map_centroid;
       MapsLib.safeShow(MapsLib.localMarker, true);
       MapsLib.safeShow(MapsLib.addrMarker, false);
-      if (MapsLib.searchRadius > 0)
+      if (MapsLib.searchRadiusMeters > 0)
       {
         if (MapsLib.searchPage.distanceFilter.filterSearchResults)
         {
-          whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.map_centroid.toString() + "," + MapsLib.searchRadiusMeters() + "))";
+          whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.map_centroid.toString() + "," + MapsLib.searchRadiusMeters + "))";
         }
-        MapsLib.map.setZoom(MapsLib.searchRadius+zoomOffset-1);
+        MapsLib.map.setZoom(MapsLib.zoomFromRadiusMeters(MapsLib.searchRadiusMeters)-1);
         MapsLib.drawSearchRadiusCircle(MapsLib.map_centroid);
       }
       MapsLib.submitSearch(whereClause, MapsLib.map, MapsLib.map_centroid);
@@ -1010,10 +1007,6 @@ $.extend(MapsLib, {
     MapsLib.customSearchFilter = "";
   },
 
-  searchRadiusMeters: function() {
-    return (100 * Math.pow(2, (18-MapsLib.searchRadius)));
-  },
-
   drawSearchRadiusCircle: function(point) {
     if (typeof MapsLib.searchRadiusCircle != 'undefined' && MapsLib.searchRadiusCircle != null)
     {
@@ -1029,7 +1022,7 @@ $.extend(MapsLib, {
       center: point,
       clickable: false,
       zIndex: -1,
-      radius: MapsLib.searchRadiusMeters()
+      radius: MapsLib.searchRadiusMeters
     };
     MapsLib.searchRadiusCircle = new google.maps.Circle(circleOptions);
   },
@@ -1224,9 +1217,9 @@ $.extend(MapsLib, {
       {
         whereClause += limitClause;
       }
-      else if (MapsLib.searchRadius > 0 && MapsLib.searchPage.distanceFilter.filterListResults)
+      else if (MapsLib.searchRadiusMeters > 0 && MapsLib.searchPage.distanceFilter.filterListResults)
       {
-        whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + centerPoint.toString() + "," + MapsLib.searchRadiusMeters() + "))";
+        whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + centerPoint.toString() + "," + MapsLib.searchRadiusMeters + "))";
         whereClause += limitClause;
       }
       else
