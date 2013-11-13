@@ -187,7 +187,7 @@ $.extend(MapsLib, {
   // Q: What do Google Maps' zoom values represent?
   // A: They're exponential power values, where
   // - zoom of X+1 zooms in to half the radius of X.
-  // - zoom of 14 = radius of 1 mile in a 520px window
+  // - zoom of 14 = radius of 1 km in a 320px window (1 mile in a 520px window)
   zoomFromRadiusMeters: function(meters) {
     if (meters == 0) return 0; // don't return infinity
     var min_diameter = Math.min($(document).width(), $(document).height());
