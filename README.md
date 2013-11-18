@@ -68,4 +68,4 @@ Get Involved
 
 If you have a customization that you'd like to share here, we'd be happy to add it to the "samples" folder.
 
-Please raise any issues or suggestions for improvement.  Or if you think this is great as-is, you might as well star it.  :)
+Please raise any issues or suggestions for improvement!
