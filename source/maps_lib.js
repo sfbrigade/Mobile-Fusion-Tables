@@ -37,6 +37,7 @@ $.extend(MapsLib, {
   locationColumn:     MapsLib.locationColumn || "",
   secondaryLocationColumn: "",
   defaultMapBounds:   {},
+  mapOverlays:        MapsLib.mapOverlays || [],
   map_centroid:       new google.maps.LatLng(37.77, -122.45), // center on SF if all else fails
   defaultZoom:        9,
 
@@ -392,7 +393,19 @@ $.extend(MapsLib, {
     // hide map until we get current location (to avoid snapping)
     $("#map_canvas").css("visibility","hidden"); 
     MapsLib.map = new google.maps.Map($("#map_canvas")[0],myOptions);
-    
+
+    $.each(MapsLib.mapOverlays, function(i, odata)
+    {
+      var imageBounds = new google.maps.LatLngBounds(
+        new google.maps.LatLng(odata.cornerNW[0], odata.cornerNW[1]),
+        new google.maps.LatLng(odata.cornerSE[0], odata.cornerSE[1]));
+
+      var overlay = new google.maps.GroundOverlay(odata.imageURL, imageBounds);
+      odata.opacityPercent = odata.opacityPercent || 50;
+      overlay.setOpacity(odata.opacityPercent/100); 
+      overlay.setMap(MapsLib.map);
+    });
+
     // add to list view when user scrolls to the bottom
     $(window).scroll(function() {
        if (MapsLib.listViewRows.length == 0) return;
