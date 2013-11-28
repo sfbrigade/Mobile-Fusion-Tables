@@ -170,6 +170,16 @@ $.extend(MapsLib, {
     // int              = snap to zoom level if ratio between current and nearby zoom radii
     //                      is greater than this (in either direction)
     snapToNearbyZoomIfRatioGreaterThan: 8
-  }
+  },
+
+  // mapOverlays is an array of ground overlays, where an overlay has the following attributes:
+  //       - imageURL: url to the image to overlay on the map
+  //       - cornerNW: [latitude, longitude] of the overlay's NW corner
+  //       - cornerSE: [latitude, longitude] of the overlay's SE corner
+  //       - opacityPercent (default = 50):
+  //            0 = completely invisible
+  //            100 = completely opaque
+
+  // mapOverlays: []
 
 });
