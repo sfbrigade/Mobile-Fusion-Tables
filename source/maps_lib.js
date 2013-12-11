@@ -394,16 +394,44 @@ $.extend(MapsLib, {
     $("#map_canvas").css("visibility","hidden"); 
     MapsLib.map = new google.maps.Map($("#map_canvas")[0],myOptions);
 
-    $.each(MapsLib.mapOverlays, function(i, odata)
+    // add map overlays
+    $.each(MapsLib.mapOverlays, function(i, entry)
     {
-      var imageBounds = new google.maps.LatLngBounds(
-        new google.maps.LatLng(odata.cornerNW[0], odata.cornerNW[1]),
-        new google.maps.LatLng(odata.cornerSE[0], odata.cornerSE[1]));
+      if (typeof entry == 'string')
+      {
+        // entry is a FusionTable ID
+        var mapLayer = new google.maps.FusionTablesLayer({
+          query: {
+            from: entry
+          },
+          styleId: 2,
+          templateId: 3,
+          map: MapsLib.map,
+          suppressInfoWindows: true
+        });
 
-      var overlay = new google.maps.GroundOverlay(odata.imageURL, imageBounds);
-      odata.opacityPercent = odata.opacityPercent || 50;
-      overlay.setOpacity(odata.opacityPercent/100); 
-      overlay.setMap(MapsLib.map);
+        google.maps.event.addListener(mapLayer, 'click', function(e) {
+          if (typeof e == 'undefined' || e == null) e = {};
+          MapsLib.infoWindow.setOptions({
+            content: e.infoWindowHtml,
+            position: e.latLng,
+            pixelOffset: e.pixelOffset
+          });
+          MapsLib.infoWindow.open(MapsLib.map);
+        });
+      }
+      else
+      {
+        // entry is a ground overlay
+        var imageBounds = new google.maps.LatLngBounds(
+          new google.maps.LatLng(entry.cornerNW[0], entry.cornerNW[1]),
+          new google.maps.LatLng(entry.cornerSE[0], entry.cornerSE[1]));
+
+        var overlay = new google.maps.GroundOverlay(entry.imageURL, imageBounds);
+        entry.opacityPercent = entry.opacityPercent || 50;
+        overlay.setOpacity(entry.opacityPercent/100); 
+        overlay.setMap(MapsLib.map);
+      }
     });
 
     // add to list view when user scrolls to the bottom
