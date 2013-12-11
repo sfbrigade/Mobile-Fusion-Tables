@@ -227,7 +227,9 @@ $.extend(MapsLib, {
     snapToNearbyZoomIfRatioGreaterThan: 8
   },
 
-  // mapOverlays is an array of ground overlays, where an overlay has the following attributes:
+  // mapOverlays is an array of overlays, where each overlay can be either of the following:
+  // A. a FusionTable ID
+  // B. an entry with the following attributes (representing a "ground overlay"):
   //       - imageURL: url to the image to overlay on the map
   //       - cornerNW: [latitude, longitude] of the overlay's NW corner
   //       - cornerSE: [latitude, longitude] of the overlay's SE corner

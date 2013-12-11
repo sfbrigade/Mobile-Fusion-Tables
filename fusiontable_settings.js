@@ -224,7 +224,9 @@ $.extend(MapsLib, {
     snapToNearbyZoomIfRatioGreaterThan: 8
   },
 
-  // mapOverlays is an array of ground overlays, where an overlay has the following attributes:
+  // mapOverlays is an array of overlays, where each overlay can be either of the following:
+  // A. a FusionTable ID
+  // B. an entry with the following attributes (representing a "ground overlay"):
   //       - imageURL: url to the image to overlay on the map
   //       - cornerNW: [latitude, longitude] of the overlay's NW corner
   //       - cornerSE: [latitude, longitude] of the overlay's SE corner
@@ -233,11 +235,12 @@ $.extend(MapsLib, {
   //            100 = completely opaque
 
   mapOverlays: [ 
+    "1GBiESlYt_Lc9O5PLuLaii1L74HeY7G4O1fMh9OE", // FusionTable ID of another table
     { 
       imageURL: 'https://www.lib.utexas.edu/maps/historical/newark_nj_1922.jpg',
       cornerNW: [40.712216, -74.22655],
       cornerSE: [40.773941, -74.12544],
-      opacityPercent: 55
+      opacityPercent: 60
     },
   ],
 */
