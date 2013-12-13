@@ -117,8 +117,13 @@ $.extend(MapsLib, {
     return (typeof teststr != 'undefined' && teststr != null && teststr.length > 0);
   },
 
+  getDefault: function(defaultval, obj)
+  {
+    return (typeof obj == 'undefined' || obj == undefined) ? defaultval : obj;
+  },
+
   updateTitle: function() {
-    var aboutContent = MapsLib.default(MapsLib.defaultAboutPage, MapsLib.aboutPage);
+    var aboutContent = MapsLib.getDefault(MapsLib.defaultAboutPage, MapsLib.aboutPage);
     if (typeof MapsLib.title != 'undefined' && MapsLib.title != undefined)
     {
       document.title = MapsLib.title;
@@ -129,11 +134,6 @@ $.extend(MapsLib, {
     {
       $("#section-about").html(aboutContent);
     }
-  },
-
-  default: function(defaultval, obj)
-  {
-    return (typeof obj == 'undefined' || obj == undefined) ? defaultval : obj;
   },
 
   getDateString: function(val)
