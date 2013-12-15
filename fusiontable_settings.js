@@ -151,6 +151,10 @@ $.extend(MapsLib, {
   // delimitedColumns (optional): specify delimiter per column, and row.COLUMN_NAME will return an array
   delimitedColumns: {"violations": ";"},
 
+  // listViewSortByColumn (optional): specify column to sort by, instead of sorting by distance
+  //                                  append "DESC" to sort in reverse
+  listViewSortByColumn: "name",
+
   customInfoboxHtml: " \
     {{#if isListView}} \
       <div> \

@@ -3,6 +3,7 @@
  * See maps_lib.js for license and repository
  *
  * REPLACE THE SETTINGS BELOW TO REFER TO YOUR OWN DATA.
+ * COLUMN NAMES ARE CASE-SENSITIVE!
  *
  * Required:
  * 1. Fusion Table IDs
@@ -124,6 +125,10 @@ $.extend(MapsLib, {
 
   // delimitedColumns (optional): specify delimiter per column, and row.COLUMN_NAME will return an array
   //delimitedColumns: {},
+
+  // listViewSortByColumn (optional): specify column to sort by, instead of sorting by distance
+  //                                  append "DESC" to sort in reverse
+  //listViewSortByColumn: "BLOCK_NUM DESC",
 
   //customInfoboxHtml: "",
 
