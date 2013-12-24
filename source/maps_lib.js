@@ -29,6 +29,7 @@ $.extend(MapsLib, {
   dateColumns:        [],
   rangeColumns:       [],
   columnRanges:       {},
+  searchColumns:      [], // storing this for resetSearch
   variantColumns:     [], // excluding columns where the min/max are the same
   outstandingQueries: 0,
 
@@ -659,6 +660,69 @@ $.extend(MapsLib, {
     }
   },
 
+  resetSearch: function() {
+    var settings = MapsLib.searchPage;
+    if (settings.addressShow)
+    {
+      $("#search_address").val("");
+    }
+    
+    if (settings.distanceFilter.dropDown.length > 0)
+    {
+      var distances = settings.distanceFilter.dropDown;
+      for (var i=0; i<distances.length; i++)
+      {
+        var distEntry = distances[i]; // format: [zoom, label, true if selected]
+        if (distEntry.length > 2 && distEntry[2] == true)
+        {
+          $("#search_radius option")[i].selected = true;
+          $("#search_radius").selectmenu('refresh');
+          break;
+        }
+      }
+    }
+
+    $.each(settings.dropDowns, function(i, cdata)
+    {
+      var full_id = "#sc_" + MapsLib.safeField(cdata.label);
+      var options = cdata.options;
+      for (var j=0; j<options.length; j++)
+      {
+        var option = options[j];
+        if (option instanceof Array && option.length > 2 && option[2] == true)
+        {
+          $(full_id + " option")[j].selected = true;
+          $(full_id).selectmenu('refresh');
+          break;
+        }
+      }
+    });
+
+    $.each(MapsLib.searchColumns, function(i, cname)
+    {
+      var safename = MapsLib.safeField(cname);
+      if (cname in MapsLib.columnRanges)
+      {
+        var range = MapsLib.columnRanges[cname];
+
+        var fmin = (range.minVal instanceof Date) ? MapsLib.getDateString(range.minVal) : range.minVal;
+        var idmin = '#sc_min_' + safename;
+        $(idmin).val(fmin);
+        $(idmin).slider('refresh');
+        
+        var fmax = (range.maxVal instanceof Date) ? MapsLib.getDateString(range.maxVal) : range.maxVal;
+        var idmax = '#sc_max_' + safename;
+        $(idmax).val(fmax);
+        $(idmax).slider('refresh');
+      }
+      else
+      {
+        var full_id = '#sc_' + safename;
+        $(full_id).val("");
+      }
+    });
+  },
+
   // Creates HTML content for search page given searchPage settings
   // See commentary above searchPage definition (in settings file) for data layout
   searchHtml: function() {
@@ -705,7 +769,7 @@ $.extend(MapsLib, {
           }
           else if (MapsLib.stringExists(template))
           {
-            html.push('<option value="' + template.replace(/{text}/g,option[0]) + '"' + selected + ">" + option[0] + "</option>");
+            html.push('<option value="' + template.replace(/{text}/g,option[0]) + '">' + option[0] + "</option>");
           }
         }
         else if (MapsLib.stringExists(template))
@@ -742,8 +806,10 @@ $.extend(MapsLib, {
       });
     }
 
+    MapsLib.searchColumns = [];
     $.each(columns, function(i, cdata)
     {
+      MapsLib.searchColumns.push(cdata.column);
       var comparator = cdata.comparison;
       var placeholder = "";
       if (comparator == undefined)
@@ -798,6 +864,7 @@ $.extend(MapsLib, {
           placeholder + "' type='text' />");
       }
     });
+
     return html.join("");
   },
 

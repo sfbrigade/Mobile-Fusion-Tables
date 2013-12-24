@@ -166,7 +166,8 @@
 
     <div data-role="content">
         <div id="section-search" data-role="fieldcontain"></div>
-        <button class="btn" id="search">Search</button>
+        <button class="btn" id="search_reset" data-theme="r">Reset Fields</button>
+        <button class="btn" id="search" data-theme="b">Search</button>
     </div>
   </div>
 
@@ -193,7 +194,9 @@
         MapsLib.onEnterMap();
         MapsLib.doSearch();
       });
-
+      $("#search_reset").click(function(){
+        MapsLib.resetSearch();
+      });
       window.addEventListener('popstate', function(e) { 
         MapsLib.onPopState();
       });
