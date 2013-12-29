@@ -92,20 +92,22 @@ $.extend(MapsLib, {
   searchPage: { 
     allColumns: false,
     distanceFilter: { 
-      dropDown: [ ["Anywhere", "0", true], ["2 blocks", "400 meters"], ["1/2 mile", ".5 miles"], ["1 mile"], ["2 miles"] ]
+      dropDown: [ ["Anywhere", "0", true], ["Crawling Distance", "30 meters"], ["Walking Distance", "100 meters"], ["1 block", "200 meters"], ["2 blocks", "400 meters"], ["1/2 mile", ".5 miles"], ["1 mile"], ["2 miles"], ["5 miles"] ]
     },
     dropDowns: [ 
       { label: "Rating Filter", options: [
         ["Any Rating", "'last_score' > 0", true],
-        ["Good", "'last_score' > 90"],
-        ["Adequate", "'last_score' > 85 AND 'last_score' <= 90"],
-        ["Needs Improvement", "'last_score' > 70 AND 'last_score' <= 85"],
-        ["Poor", "'last_score' <= 70 AND 'last_score' > 0"]
+        ["Good (Above 90)", "'last_score' > 90"],
+        ["Adequate (86-90)", "'last_score' > 85 AND 'last_score' <= 90"],
+        ["Needs Improvement (71-85)", "'last_score' > 70 AND 'last_score' <= 85"],
+        ["Poor (70 or below)", "'last_score' <= 70 AND 'last_score' > 0"]
       ] }
     ],
     columns: [
       {label: "Name", column: "name"},
-      {label: "Violations", column: "violations"}
+      {label: "Violations", column: "violations"},
+      {label: "Last Inspection Date", column: "sc_min_last_inspection_date"},
+      {label: "Last Score", column: "sc_min_last_score", range: "last_score"}
     ],
   },
 
