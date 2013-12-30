@@ -106,8 +106,7 @@ $.extend(MapsLib, {
     columns: [
       {label: "Name", column: "name"},
       {label: "Violations", column: "violations"},
-      {label: "Last Inspection Date", column: "sc_min_last_inspection_date"},
-      {label: "Last Score", column: "sc_min_last_score", range: "last_score"}
+      
     ],
   },
 
