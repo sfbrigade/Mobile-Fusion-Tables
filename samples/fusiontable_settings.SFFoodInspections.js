@@ -92,7 +92,7 @@ $.extend(MapsLib, {
   searchPage: { 
     allColumns: false,
     distanceFilter: { 
-      dropDown: [ ["Anywhere", "0", true], ["Crawling Distance", "30 meters"], ["Walking Distance", "100 meters"], ["1 block", "200 meters"], ["2 blocks", "400 meters"], ["1/2 mile", ".5 miles"], ["1 mile"], ["2 miles"], ["5 miles"] ]
+      dropDown: [ ["Anywhere", "0", true], ["1 block", "200 meters"], ["2 blocks", "400 meters"], ["1/2 mile", ".5 miles"], ["1 mile"], ["2 miles"] ]
     },
     dropDowns: [ 
       { label: "Rating Filter", options: [
