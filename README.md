@@ -1,7 +1,7 @@
 Mobile Fusion Tables
 ====================
 
-This is a mobile-ready template using Fusion Tables and jQuery Mobile, originally based on Derek Eder's [Fusion Table Searchable Map Template](https://github.com/derekeder/FusionTable-Map-Template).
+A mobile-ready template using Fusion Tables and jQuery Mobile, originally based on Derek Eder's [Fusion Table Searchable Map Template](https://github.com/derekeder/FusionTable-Map-Template).
 
 This is an SF Brigade project for Code for America. Started by Mark Brenig-Jones, completed by Rego Sen, with contributions from Sidney Zhang and Andrew Byrne.
 
