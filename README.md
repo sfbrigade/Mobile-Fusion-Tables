@@ -14,6 +14,10 @@ Demos
 - SF Liquefaction Data: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFLiquefaction.html
 - SFCTA Projects: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-MyStreetSF.html
 
+Here are some web apps that now use Mobile Fusion Tables:
+
+- <a href="http://www.phillyfarmersmarkets.com" target="_blank">Philly Farmers Markets</a>
+- <a href="http://trsmap.com" target="_blank">The Rider Scope</a> (snowmobile trails in NY State)
 
 Demo Using Your Own Fusion Table
 --------------------------------
@@ -35,6 +39,14 @@ That's it.  You now have a working site that's equivalent to the above demo.  It
 If you want to make your app even sexier, explore the rest of the settings file to customize your content and behavior.  See the "samples" folder to see how the above demos were customized. 
 
 
+Turn It Into A Native App
+-------------------------
+
+You can combine Mobile Fusion Tables with a wrapper like <a href="http://phonegap.com" target="_blank">Phonegap</a> to build a pure mobile app.
+
+For example, here's the <a href="https://play.google.com/store/apps/details?id=com.moto.theriderscope" target="_blank">Android version</a> of The Rider Scope app featured above.
+  
+  
 Walkthrough
 -----------
 
