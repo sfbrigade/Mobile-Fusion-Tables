@@ -249,6 +249,7 @@ $.extend(MapsLib, {
   //       - opacityPercent (default = 50):
   //            0 = completely invisible
   //            100 = completely opaque
+  // If needed, you can access these layers using MapsLib.mapOverlayLayers to control their visibility.
 
   mapOverlays: [ 
     "1GBiESlYt_Lc9O5PLuLaii1L74HeY7G4O1fMh9OE", // FusionTable ID of another table

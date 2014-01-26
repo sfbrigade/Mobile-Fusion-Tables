@@ -222,6 +222,7 @@ $.extend(MapsLib, {
   //       - opacityPercent (default = 50):
   //            0 = completely invisible
   //            100 = completely opaque
+  // If needed, you can access these layers using MapsLib.mapOverlayLayers to control their visibility.
 
   // mapOverlays: []
 
