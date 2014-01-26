@@ -39,6 +39,7 @@ $.extend(MapsLib, {
   secondaryLocationColumn: "",
   defaultMapBounds:   {},
   mapOverlays:        MapsLib.mapOverlays || [],
+  mapOverlayLayers:   [],
   map_centroid:       new google.maps.LatLng(37.77, -122.45), // center on SF if all else fails
   defaultZoom:        9,
 
@@ -421,6 +422,7 @@ $.extend(MapsLib, {
           });
           MapsLib.infoWindow.open(MapsLib.map);
         });
+        MapsLib.mapOverlayLayers.push(mapLayer);
       }
       else
       {
@@ -433,6 +435,7 @@ $.extend(MapsLib, {
         entry.opacityPercent = entry.opacityPercent || 50;
         overlay.setOpacity(entry.opacityPercent/100); 
         overlay.setMap(MapsLib.map);
+        MapsLib.mapOverlayLayers.push(overlay);
       }
     });
 
