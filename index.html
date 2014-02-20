@@ -165,41 +165,41 @@
         </div>
 
         <div data-role="content">
-                <div id="section-search" data-role="fieldcontain"></div>
-                <button class="btn" id="search_reset" data-theme="r">Reset Fields</button>
-                <button class="btn" id="search" data-theme="b">Search</button>
+            <div id="section-search" data-role="fieldcontain"></div>
+            <button class="btn" id="search_reset" data-theme="r">Reset Fields</button>
+            <button class="btn" id="search" data-theme="b">Search</button>
         </div>
     </div>
 
     <script type="text/javascript">
     $(function() {
-            MapsLib.initialize();
+        MapsLib.initialize();
 
-            $("#about").click(function() { MapsLib.onExitMap(); });
-            $("#search_page").click(function() { MapsLib.onExitMap(); });
-            $("#listview").click(function(){
-                MapsLib.onExitMap();
-                MapsLib.getListView();
-            });
+        $("#about").click(function() { MapsLib.onExitMap(); });
+        $("#search_page").click(function() { MapsLib.onExitMap(); });
+        $("#listview").click(function(){
+            MapsLib.onExitMap();
+            MapsLib.getListView();
+        });
 
-            $("#about_back").click(function() { MapsLib.onEnterMap(); });
-            $("#search_back").click(function() { MapsLib.onEnterMap(); });
-            $("#list_back").click(function() { MapsLib.onEnterMap(); });
+        $("#about_back").click(function() { MapsLib.onEnterMap(); });
+        $("#search_back").click(function() { MapsLib.onEnterMap(); });
+        $("#list_back").click(function() { MapsLib.onEnterMap(); });
 
-            $("#search").click(function(){
-                MapsLib.onEnterMap();
-                MapsLib.doSearch();
-            });
-            $("#search_top").click(function(){
-                MapsLib.onEnterMap();
-                MapsLib.doSearch();
-            });
-            $("#search_reset").click(function(){
-                MapsLib.resetSearch();
-            });
-            window.addEventListener('popstate', function(e) { 
-                MapsLib.onPopState();
-            });
+        $("#search").click(function(){
+            MapsLib.onEnterMap();
+            MapsLib.doSearch();
+        });
+        $("#search_top").click(function(){
+            MapsLib.onEnterMap();
+            MapsLib.doSearch();
+        });
+        $("#search_reset").click(function(){
+            MapsLib.resetSearch();
+        });
+        window.addEventListener('popstate', function(e) { 
+            MapsLib.onPopState();
+        });
     });
 
 </script>
