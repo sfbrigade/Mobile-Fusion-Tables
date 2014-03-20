@@ -421,8 +421,7 @@ $.extend(MapsLib, {
             templateId: 3,
             suppressInfoWindows: true
         });
-        MapsLib.searchrecords.setMap(MapsLib.map);
-
+        
         // add map overlays
         var overlayIndices = [];
         $.each(MapsLib.mapOverlays, function(i, entry)
@@ -468,6 +467,7 @@ $.extend(MapsLib, {
                 overlayIndices.push(i);
             }
         });
+
         MapsLib.setLayerVisibility(overlayIndices);
 
         // add to list view when user scrolls to the bottom
@@ -1135,6 +1135,7 @@ $.extend(MapsLib, {
         {
             MapsLib.mapOverlayOrder = layerOrder;
         }
+        MapsLib.searchrecords.setMap(null);
         $.each(MapsLib.mapOverlayLayers, function(i, layer)
         {
             layer.setMap(null);
@@ -1143,6 +1144,7 @@ $.extend(MapsLib, {
         {
             MapsLib.mapOverlayLayers[index].setMap(MapsLib.map);
         });
+        MapsLib.searchrecords.setMap(MapsLib.map);
     },
     submitSearch: function(whereClause, map, location) {
         //get using all filters
