@@ -238,11 +238,6 @@ $.extend(MapsLib, {
     //            0 = completely invisible
     //            100 = completely opaque
 
-    // If needed, you can control visibility of these layers by calling MapsLib.setLayerVisibility([array of indices]).
-    // Examples: 
-    //    MapsLib.setLayerVisibility([0,2]) will show only the first and third layers, and the first layer will be on top.
-    //    MapsLib.setLayerVisibility([]) will hide all layers
-
     mapOverlays: [ 
         "1GBiESlYt_Lc9O5PLuLaii1L74HeY7G4O1fMh9OE", // FusionTable ID of another table
         { 
@@ -252,6 +247,12 @@ $.extend(MapsLib, {
             opacityPercent: 60
         },
     ],
+
+    // If needed, you can change the visibility of these layers by calling this in script:
+    //    MapsLib.setLayerVisibility([array of indices from bottom to top])
+    // Examples: 
+    //    MapsLib.setLayerVisibility([0,2]) will show only the first and third layers, and the third layer will be on top.
+    //    MapsLib.setLayerVisibility([]) will hide all layers
 */
 
 });
