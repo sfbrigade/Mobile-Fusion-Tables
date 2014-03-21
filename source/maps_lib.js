@@ -776,7 +776,7 @@ $.extend(MapsLib, {
                 var label = distEntry[0];
                 var zoomstring = (distEntry.length > 1) ? distEntry[1] : distEntry[0];
                 var radiusMeters = MapsLib.metersFromString(zoomstring);
-                var selected = (distEntry.length > 2 && distEntry[2] == true) ? " selected='selected'" : "";
+                var selected = (distEntry.length > 2 && distEntry[2] == true) ? ' selected="selected"' : "";
                 html.push("<option value='" + radiusMeters + "'" + selected + ">" + label + "</option>");
             }
             html.push("</select>");
@@ -796,8 +796,8 @@ $.extend(MapsLib, {
                 {
                     if (option.length > 1)
                     {
-                        var selected = (option.length > 2 && option[2] == true) ? " selected='selected'" : "";
-                        html.push('<option value="' + option[1] + '">' + option[0] + "</option>");
+                        var selected = (option.length > 2 && option[2] == true) ? ' selected="selected"' : "";
+                        html.push('<option value="' + option[1] + '"' + selected + ">" + option[0] + "</option>");
                     } 
                     else if (MapsLib.stringExists(template))
                     {
