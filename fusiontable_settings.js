@@ -83,6 +83,8 @@ $.extend(MapsLib, {
     //          3. true if this is the default selection
     //       - template (optional): template for WHERE clause, using {text} to insert drop-down text
     //         NOTE: if you use a template, a drop-down entry can be just the drop-down text instead of an array.
+    //       - foreach (optional): populates drop-down with an entry for each unique value of the specified column
+    //         NOTE: if you use foreach, you can still add entries under options (they will appear at the top of the dropdown).
     //
     //  - columns: array of column fields, where a field has the following attributes:
     //       - label

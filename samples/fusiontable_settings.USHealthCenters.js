@@ -78,6 +78,8 @@ $.extend(MapsLib, {
     //          3. true if this is the default selection
     //       - template (optional): template for WHERE clause, using {text} to insert drop-down text
     //         NOTE: if you use a template, a drop-down entry can be just the drop-down text instead of an array.
+    //       - foreach (optional): populates drop-down with an entry for each unique value of the specified column
+    //         NOTE: if you use foreach, you can still add entries under options (they will appear at the top of the dropdown).
     //
     //  - columns: array of column fields, where a field has the following attributes:
     //       - label
@@ -96,12 +98,12 @@ $.extend(MapsLib, {
             dropDown: [ ["Anywhere", "0", true], ["2 miles"], ["8 miles"], ["100 miles"], ["500 miles"] ]
         },
         dropDowns: [ 
-            { label: "Organization Type", options: [
-                ["Any", "", true],
-                [".gov", "'Grantee Organization Type Description' = 'U.S. Government Entity'"],
-                [".com", "'Grantee Organization Type Description' = 'Corporate Entity, Federal Tax Exempt'"],
-                [".org", "'Grantee Organization Type Description' NOT EQUAL TO 'Corporate Entity, Federal Tax Exempt' AND 'Grantee Organization Type Description' NOT EQUAL TO 'U.S. Government Entity'"]
-            ] }
+            { label: "Organization Type", 
+                options: [
+                    ["Any", "", true],
+                ],
+                foreach: "Grantee Organization Type Description"
+             },
         ],
         columns: [
             { label: "Name", column: "Name", exact_match: false }

@@ -788,26 +788,36 @@ $.extend(MapsLib, {
             html.push("<hr><label for='sc_" + field_id + "'>" + cdata.label + ":</label>");
             html.push("<select data-ref='custom' id='sc_" + field_id + "' name=''>");
             var template = cdata.template;
+            var foreach = cdata.foreach;
             var options = cdata.options;
-            for (var j = 0; j < options.length; j++)
-            {
-                var option = options[j];
-                if (option instanceof Array)
+            if (typeof options != 'undefined')
+            {    
+                for (var j = 0; j < options.length; j++)
                 {
-                    if (option.length > 1)
+                    var option = options[j];
+                    if (option instanceof Array)
                     {
-                        var selected = (option.length > 2 && option[2] == true) ? ' selected="selected"' : "";
-                        html.push('<option value="' + option[1] + '"' + selected + ">" + option[0] + "</option>");
+                        if (option.length > 1)
+                        {
+                            var selected = (option.length > 2 && option[2] == true) ? ' selected="selected"' : "";
+                            html.push('<option value="' + option[1] + '"' + selected + ">" + option[0] + "</option>");
+                        } 
+                        else if (MapsLib.stringExists(template))
+                        {
+                            html.push('<option value="' + template.replace(/{text}/g, option[0]) + '">' + option[0] + "</option>");
+                        }
                     } 
                     else if (MapsLib.stringExists(template))
                     {
-                        html.push('<option value="' + template.replace(/{text}/g, option[0]) + '">' + option[0] + "</option>");
+                        html.push('<option value="' + template.replace(/{text}/g, option) + '">' + option + "</option>");
                     }
-                } 
-                else if (MapsLib.stringExists(template))
-                {
-                    html.push('<option value="' + template.replace(/{text}/g, option) + '">' + option + "</option>");
                 }
+            }
+            if (MapsLib.stringExists(foreach))
+            {
+                var foreachSafe = "'" + foreach + "'";
+                MapsLib.in_query = "sc_" + field_id;
+                MapsLib.query(foreachSafe + ", Count()", "", "", foreachSafe, "MapsLib.updateSearchForeach");
             }
             html.push("</select>");
         });
@@ -960,7 +970,7 @@ $.extend(MapsLib, {
 
         $("select[data-ref='custom']").each(function( index ) {
             var clause = $(this).find(":selected").val();
-            if (clause.length > 0)
+            if ((typeof clause != 'undefined') && clause.length > 0)
             {
                 whereClauses.push(clause);
             }
@@ -1001,7 +1011,7 @@ $.extend(MapsLib, {
                     {
                         google.maps.event.addListener(MapsLib.addrMarker, 'click', function() {
                             MapsLib.infoWindow.setOptions({
-                                content: '<div class="infobox-container">' + MapsLib.addressPinInfobox.replace("{address}", shortAddress) + '</div>',
+                                content: '<div class="infobox-container">' + MapsLib.addressPinInfobox.replace("{address}", address.split(",")[0]) + '</div>',
                                 position: MapsLib.currentPinpoint,
                                 pixelOffset: new google.maps.Size(0, -32)
                             });
@@ -1209,7 +1219,7 @@ $.extend(MapsLib, {
         };
         MapsLib.searchRadiusCircle = new google.maps.Circle(circleOptions);
     },
-    query: function(selectColumns, whereClause, orderClause, callback) {
+    query: function(selectColumns, whereClause, orderClause, groupClause, callback) {
         var queryStr = [];
         queryStr.push("SELECT " + selectColumns);
         queryStr.push(" FROM " + MapsLib.fusionTableId);
@@ -1218,6 +1228,9 @@ $.extend(MapsLib, {
         }
         if (orderClause) {
             queryStr.push(" ORDER BY " + orderClause);
+        }
+        if (groupClause) {
+            queryStr.push(" GROUP BY " + groupClause);
         }
 
         var sql = encodeURIComponent(queryStr.join(" "));
@@ -1428,8 +1441,24 @@ $.extend(MapsLib, {
         {
             $("ul#listview").html('<li data-corners="false" data-shadow="false" data-iconshadow="true" data-theme="d">Loading results...</li>');
         }
-        MapsLib.in_query = true;
-        MapsLib.query("*", whereClause, orderClause, "MapsLib.displayListView");
+        if (!MapsLib.in_query) MapsLib.in_query = true;
+        MapsLib.query("*", whereClause, orderClause, "", "MapsLib.displayListView");
+    },
+    updateSearchForeach: function(json) {
+        var selectObject = $("#" + MapsLib.in_query);
+        MapsLib.in_query = false;
+        if (MapsLib.handleError(json)) {
+            return false;
+        }
+        // add distinct rows to search dropdown
+        var numRows = (json != undefined && json.rows != undefined) ? json.rows.length : 0;
+        var column = json.columns[0];
+        for (var ix = 0; ix < numRows; ix++) {
+            var rowname = json.rows[ix][0];
+            var whereclause = "'" + column + "' = '" + rowname + "'";
+            var row = $("<option></option>").attr("value", whereclause).text(rowname);
+            selectObject.append(row);
+        }
     },
     displayListView: function(json) {
         MapsLib.in_query = false;
