@@ -20,6 +20,7 @@ $.extend(MapsLib, {
     userPosition:       null,
     nearbyPosition:     null,
     overrideCenter:     false, 
+    centerQueued:       false,
     ignoreIdle:         false,
     mapState:           true,
     geocoder:           new google.maps.Geocoder(),
@@ -286,12 +287,14 @@ $.extend(MapsLib, {
             } 
             else
             {
+                MapsLib.centerQueued = true;
                 var address = MapsLib.defaultMapBounds.center;
                 MapsLib.defaultMapBounds.center = MapsLib.map_centroid;
                 MapsLib.geocoder.geocode( {
                         'address': address 
                     }, 
                     function(results, status) {
+                        MapsLib.centerQueued = false;
                         if (status == google.maps.GeocoderStatus.OK) {
                             MapsLib.defaultMapBounds.center = results[0].geometry.location;
                             if (MapsLib.userPosition == null)
@@ -305,6 +308,11 @@ $.extend(MapsLib, {
                             {
                                 updateCenter(MapsLib.userPosition);
                             }
+                            MapsLib.defaultMapBounds.bounds = new google.maps.Circle({
+                                center: MapsLib.defaultMapBounds.center,
+                                radius: MapsLib.defaultMapBounds.radius
+                            }).getBounds();
+                            MapsLib.updateAutocompleteBounds();
                         }
                     }
                 );
@@ -499,7 +507,7 @@ $.extend(MapsLib, {
             else
             {
                 MapsLib.nearbyPosition = new google.maps.LatLng(userPosition.coords.latitude, userPosition.coords.longitude);
-                if (MapsLib.maxDistanceFromDefaultCenter > 0)
+                if (!MapsLib.centerQueued && MapsLib.maxDistanceFromDefaultCenter > 0)
                 {
                     // check our distance from the default center
                     var dist = google.maps.geometry.spherical.computeDistanceBetween(MapsLib.nearbyPosition, MapsLib.defaultMapBounds.center);
@@ -624,10 +632,8 @@ $.extend(MapsLib, {
             }
         });
 
-        //-----custom initializers-------
-        //-----end of custom initializers-------
     },
-    initSearchFieldCallbacks: function() {
+    updateAutocompleteBounds: function() {
         var settings = MapsLib.searchPage.addressAutocomplete;
         if (settings != false)
         {
@@ -645,6 +651,9 @@ $.extend(MapsLib, {
             }
             MapsLib.autocomplete = new google.maps.places.Autocomplete($("#search_address")[0], options);
         }
+    },
+    initSearchFieldCallbacks: function() {
+        MapsLib.updateAutocompleteBounds();
         if ('ontouchstart' in window || 'onmsgesturechange' in window)
         {
             // Touch screens only: dismiss keyboard when user hits return in input fields
