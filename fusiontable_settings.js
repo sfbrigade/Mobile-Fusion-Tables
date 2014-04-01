@@ -19,7 +19,7 @@
  *     - How It Should Use Your Nearby Location
  */
 
-var MapsLib = MapsLib || {};
+var MapsLib = MapsLib || {}; MapsLib.schemaVersion = 2;
 
 
     /////////////////////////
@@ -52,7 +52,7 @@ $.extend(MapsLib, {
     // 2. SEARCH SETTINGS //
     ////////////////////////
 
-    // By default, you will get a text field for each column.
+    // By default, you will get a text or range field for each column in your table.
     // However, you can customize search settings using the following attributes:
     //
     //  - allColumns (default=true):             a text field will appear for each column.
@@ -68,51 +68,65 @@ $.extend(MapsLib, {
     //  - distanceFilter: drop-down for restricting search results by distance to address (or nearby).  Comment this out to have no such drop-down.
     //     - filterSearchResults (default=true): limit search results to those within distance
     //     - filterListResults (default=true):   limit list results to those within distance (otherwise they're just ordered nearest-first)
-    //     - dropDown:                           array of drop-down entries for distance from address.  Each entry is an array of:
+    //     - entries:                            array of drop-down entries for distance from address.  Each entry is an array of:
     //          1. drop-down text
     //          2. radius length as "X miles" or "X meters" if the drop-down text wasn't already in this format.
     //          3. true if this is the default selection
     //       - You can specify "0" for radius length to not filter by distance, and leave zoom as-is.
     //
-    //  - dropDowns: array of custom drop-downs, where an entry has the following attributes:
+    //
+    //  - columns: array of search fields.  Each field has a type, and additional attributes that depend on the type:
+    //
+    //      type: "text"
     //       - label
-    //       - options: array of drop-down entries.  Each entry is an array of:
+    //       - column: name of column
+    //       - exact_match (default=false): look for exact match instead of a contains match
+    //
+    //      type: "slider" (default for numbers and dates, automatically gets minimum and maximum values)
+    //       - label
+    //       - column: name of column
+    //
+    //      type: "checkbox"
+    //       - label
+    //       - is_checked (default=false): start out as checked
+    //       - unchecked_query: filter to this Fusion Table SQL-style WHERE clause when unchecked
+    //       - checked_query: filter to this Fusion Table SQL-style WHERE clause when checked
+    //
+    //      type: "dropdown"
+    //       - label
+    //       - entries: array of drop-down entries.  Each entry is an array of:
     //          1. drop-down text
     //          2. Fusion Table SQL-style WHERE clause (overrides template)
     //             - see https://developers.google.com/fusiontables/docs/v1/sql-reference for Fusion Table-friendly WHERE clauses
     //          3. true if this is the default selection
     //       - template (optional): template for WHERE clause, using {text} to insert drop-down text
-    //         NOTE: if you use a template, a drop-down entry can be just the drop-down text instead of an array.
+    //          NOTE: if you use a template, a drop-down entry can be just the drop-down text instead of an array.
     //       - foreach (optional): populates drop-down with an entry for each unique value of the specified column
-    //         NOTE: if you use foreach, you can still add entries under options (they will appear at the top of the dropdown).
+    //          NOTE: if you use foreach, you can still add entries under options (they will appear at the top of the dropdown).
     //
-    //  - columns: array of column fields, where a field has the following attributes:
-    //       - label
-    //       - column: name of column
-    //       - exact_match (default=false, meaningless if options is specified): look for exact match instead of a contains match
-    //       - range (numbers and dates only, default=true): use this if you want a range slider.  Looks up minimum and maximum values for column.
-    //
-    //  If "allColumns" is true, "columns" will simply override label/match settings for the specified columns
-    //  Fields for numerical columns use exact match- they have no support for contains match.
-    //    (Create a drop-down to search within ranges in numerical value.)
+    //  If "allColumns" is true, "text" and "slider" columns will simply override label/match settings for the specified columns
+    //  Text fields for numerical columns use exact match only.  (If you want range categories, create a drop-down)
 
     searchPage: { 
         allColumns: false,
         distanceFilter: { 
-            dropDown: [ ["Anywhere", "0", true], ["2 blocks", "400 meters"], ["1/2 mile", ".5 miles"], ["1 mile"], ["2 miles"] ]
+            entries: [ 
+            ["Anywhere", "0", true], 
+            ["2 blocks", "400 meters"], 
+            ["1/2 mile", ".5 miles"], 
+            ["1 mile"], 
+            ["2 miles"] ]
         },
-        dropDowns: [ 
-            { label: "Rating Filter", options: [
+        columns: [ 
+            { label: "Rating Filter", type: "dropdown", entries: [
                 ["Any Rating", "'last_score' > 0", true],
                 ["Good", "'last_score' > 90"],
                 ["Adequate", "'last_score' > 85 AND 'last_score' <= 90"],
                 ["Needs Improvement", "'last_score' > 70 AND 'last_score' <= 85"],
                 ["Poor", "'last_score' <= 70 AND 'last_score' > 0"]
-            ] }
-        ],
-        columns: [
-            {label: "Name", column: "name"},
-            {label: "Violations", column: "violations"}
+            ] },
+            { label: "Name", type: "text", column: "name"},
+            { label: "Violations", type: "text", column: "violations"},
         ],
     },
 */
@@ -275,5 +289,4 @@ $.extend(MapsLib, {
     //    MapsLib.setLayerVisibility([0,2]) will show only the first and third layers, and the third layer will be on top.
     //    MapsLib.setLayerVisibility([]) will hide all layers
 */
-
 });
