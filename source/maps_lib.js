@@ -1174,7 +1174,7 @@ $.extend(MapsLib, {
     },
     safeField: function(val)
     {
-        return (val == undefined) ? "" : val.replace(/ /g, "_").replace(/\./g, "").replace(/:/g, "").replace(/\?/g, "").replace(/#/g, "_").replace(/$/g, "_");
+        return (val == undefined) ? "" : val.replace(/ /g, "_").replace(/\./g, "").replace(/:/g, "").replace(/\?/g, "").replace(/#/g, "_").replace(/\$/g, "_");
     },
     safeShow: function(testobj, visible) {
         if (testobj != null)
