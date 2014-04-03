@@ -1084,13 +1084,14 @@ $.extend(MapsLib, {
         });
 
         $("input[data-ref='checkbox']").each(function( index ) {
-            if ($(this).attr("checked") == "checked")
+            var clause = $(this).attr("data-checked");
+            if ($(this).attr("checked") != "checked")
             {
-                whereClauses.push($(this).attr("data-checked"));
+                clause = $(this).attr("data-unchecked");
             }
-            else
+            if ((clause != 'undefined') && (clause != ''))
             {
-                whereClauses.push($(this).attr("data-unchecked"));
+                whereClauses.push(clause);
             }
         });
 
