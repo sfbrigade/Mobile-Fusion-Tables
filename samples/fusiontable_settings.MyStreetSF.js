@@ -77,13 +77,26 @@ $.extend(MapsLib, {
     //       - column: name of column
     //       - exact_match (default=false): look for exact match instead of a contains match
     //
-    //      type: "slider" (default for numbers and dates, automatically gets minimum and maximum values)
+    //      type: "datepicker"
+    //       - label
+    //       - column: name of column
+    //       - min (default = earliest date if column is datetime, "" means no min bounds): disable dates before this
+    //       - max (default = latest date if column is datetime, "" means no max bounds): disable dates after this
+    //       - format (default = "mm/dd/yy"): useful if you're using a text column for this
+    //
+    //      type: "slider" (default for numbers and dates, won't work for text columns, pops up datepicker for datetime columns)
+    //       - label
+    //       - column: name of column
+    //       - min (default = min value): override min value
+    //       - max (default = max value): override max value
+    //
+    //      type: "datepicker" (default for numbers and dates, automatically gets minimum and maximum values)
     //       - label
     //       - column: name of column
     //
     //      type: "checkbox"
     //       - label
-    //       - is_checked (default=false): start out as checked
+    //       - is_checked (default = false): start out as checked
     //       - unchecked_query: filter to this Fusion Table SQL-style WHERE clause when unchecked
     //       - checked_query: filter to this Fusion Table SQL-style WHERE clause when checked
     //
@@ -125,8 +138,6 @@ $.extend(MapsLib, {
                 ["At least $10M", "'Total Project Cost Estimate' LIKE '$%__,___,___'"],
                 ["At least $100M", "'Total Project Cost Estimate' LIKE '$%___,___,___'"]
             ] },
-            { label: "Date Completed By", type: "slider", 
-                column: "Project Completion Expected" },
             { label: "Show Current Projects Only", type: "checkbox", 
                 is_checked: true,
                 checked_query: "'Percent Complete' NOT EQUAL TO '0%' AND 'Percent Complete' NOT EQUAL TO '100%'" },

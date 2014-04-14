@@ -70,13 +70,22 @@ $.extend(MapsLib, {
     //       - column: name of column
     //       - exact_match (default=false): look for exact match instead of a contains match
     //
-    //      type: "slider" (default for numbers and dates, automatically gets minimum and maximum values)
+    //      type: "datepicker"
     //       - label
     //       - column: name of column
+    //       - min (default = earliest date if column is datetime, "" means no min bounds): disable dates before this
+    //       - max (default = latest date if column is datetime, "" means no max bounds): disable dates after this
+    //       - format (default = "mm/dd/yy"): useful if you're using a text column for this
+    //
+    //      type: "slider" (default for numbers and dates, won't work for text columns, pops up datepicker for datetime columns)
+    //       - label
+    //       - column: name of column
+    //       - min (default = min value): override min value
+    //       - max (default = max value): override max value
     //
     //      type: "checkbox"
     //       - label
-    //       - is_checked (default=false): start out as checked
+    //       - is_checked (default = false): start out as checked
     //       - unchecked_query: filter to this Fusion Table SQL-style WHERE clause when unchecked
     //       - checked_query: filter to this Fusion Table SQL-style WHERE clause when checked
     //
@@ -115,6 +124,8 @@ $.extend(MapsLib, {
             ] },
             { label: "Name", type: "text", column: "name"},
             { label: "Violations", type: "text", column: "violations"},
+            { label: "Score", type: "slider", column: "last_score", min: 0, max: 100},
+            { label: "Last Inspected", type: "datepicker", column: "last_inspection_date"},
         ],
     },
 */
