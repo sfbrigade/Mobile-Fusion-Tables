@@ -149,7 +149,7 @@ $.extend(MapsLib, {
 
 /*
     // Title bar (including title of website)
-    title: "SF Food Inspections",
+    title: "SF Restaurant Inspections",
 
     // Contents of the About Page.  You can use "{title}" to insert your title.
     aboutPage: " \
