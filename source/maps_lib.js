@@ -36,6 +36,7 @@ $.extend(MapsLib, {
     // map overrides
     useNearbyLocation:  MapsLib.useNearbyLocation || {},
     locationColumn:     MapsLib.locationColumn || "",
+    safeLocationColumn: MapsLib.locationColumn || "",
     secondaryLocationColumn: "",
     defaultMapBounds:   {},
     mapOverlays:        MapsLib.mapOverlays || [],
@@ -1201,7 +1202,7 @@ $.extend(MapsLib, {
         });
 
         MapsLib.customSearchFilter = whereClauses.join(" AND ");
-        var whereClause = "'" + MapsLib.locationColumn + "' NOT EQUAL TO ''";
+        var whereClause = MapsLib.safeLocationColumn + " NOT EQUAL TO ''";
         if (MapsLib.customSearchFilter.length > 0)
         {
             whereClause += " AND " + MapsLib.customSearchFilter;
@@ -1244,7 +1245,7 @@ $.extend(MapsLib, {
                     }
                     if (MapsLib.searchPage.distanceFilter.filterSearchResults && MapsLib.searchRadiusMeters > 0)
                     {
-                        whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadiusMeters + "))";
+                        whereClause += " AND ST_INTERSECTS(" + MapsLib.safeLocationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadiusMeters + "))";
                         MapsLib.drawSearchRadiusCircle(MapsLib.currentPinpoint);
                     }
                     MapsLib.submitSearch(whereClause, MapsLib.map, MapsLib.currentPinpoint);
@@ -1265,7 +1266,7 @@ $.extend(MapsLib, {
             {
                 if (MapsLib.searchPage.distanceFilter.filterSearchResults)
                 {
-                    whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.map_centroid.toString() + "," + MapsLib.searchRadiusMeters + "))";
+                    whereClause += " AND ST_INTERSECTS(" + MapsLib.safeLocationColumn + ", CIRCLE(LATLNG" + MapsLib.map_centroid.toString() + "," + MapsLib.searchRadiusMeters + "))";
                 }
                 MapsLib.map.setZoom(MapsLib.zoomFromRadiusMeters(MapsLib.searchRadiusMeters));
                 MapsLib.drawSearchRadiusCircle(MapsLib.map_centroid);
@@ -1579,12 +1580,9 @@ $.extend(MapsLib, {
             }
         }
 
-        // make sure location column has single quotes if it contains a space
-        if (MapsLib.locationColumn.indexOf(" ") != -1)
-        {
-            MapsLib.locationColumn = "'" + MapsLib.locationColumn + "'";
-            MapsLib.locationColumn = MapsLib.locationColumn.replace(/''/g, "'");
-        }
+        // wrap location column in single quotes
+        MapsLib.safeLocationColumn = "'" + MapsLib.locationColumn + "'";
+        MapsLib.safeLocationColumn = MapsLib.safeLocationColumn.replace(/''/g, "'");
 
         var customColumns = [];
         $.each(MapsLib.searchPage.columns, function(i, cdata) {
@@ -1659,7 +1657,7 @@ $.extend(MapsLib, {
         MapsLib.updateListView();
     },
     updateListView: function() {
-        var whereClause = "'" + MapsLib.locationColumn + "' NOT EQUAL TO ''";
+        var whereClause = MapsLib.safeLocationColumn + " NOT EQUAL TO ''";
         var orderClause = "";
         if (MapsLib.customSearchFilter.length > 0) {
             whereClause += " AND " + MapsLib.customSearchFilter;
@@ -1675,7 +1673,7 @@ $.extend(MapsLib, {
         } 
         else if (MapsLib.searchRadiusMeters > 0 && MapsLib.searchPage.distanceFilter.filterListResults)
         {
-            whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + centerPoint.toString() + "," + MapsLib.searchRadiusMeters + "))";
+            whereClause += " AND ST_INTERSECTS(" + MapsLib.safeLocationColumn + ", CIRCLE(LATLNG" + centerPoint.toString() + "," + MapsLib.searchRadiusMeters + "))";
             if (MapsLib.listViewSortByColumn)
             {
                 whereClause += " ORDER BY " + MapsLib.listViewSortByColumn;
@@ -1685,7 +1683,7 @@ $.extend(MapsLib, {
         else
         {
             // FusionTable query limitation: There can at most be one spatial condition or "order by distance" condition.  We can't do both.
-            orderClause = MapsLib.listViewSortByColumn || "ST_DISTANCE(" + MapsLib.locationColumn + ", LATLNG" + centerPoint.toString() + ")";
+            orderClause = MapsLib.listViewSortByColumn || "ST_DISTANCE(" + MapsLib.safeLocationColumn + ", LATLNG" + centerPoint.toString() + ")";
             orderClause += limitClause;
         }
 
