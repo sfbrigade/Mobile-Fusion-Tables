@@ -28,6 +28,7 @@ $.extend(MapsLib, {
     // data
     numericalColumns:   [],
     dateColumns:        [],
+    timeColumns:        [],
     columnRanges:       {},
     searchColumns:      [], // storing this for resetSearch
     variantColumns:     [], // excluding columns where the min/max are the same
@@ -138,6 +139,12 @@ $.extend(MapsLib, {
             $("#section-about").html(aboutContent);
         }
     },
+    isStringColumn: function(name)
+    {
+        return ($.inArray(name, MapsLib.numericalColumns) == -1 && 
+                $.inArray(name, MapsLib.dateColumns) == -1 && 
+                $.inArray(name, MapsLib.timeColumns) == -1);
+    },
     getDateString: function(val, zeroIndexMonth)
     {
         var dateVal = val;
@@ -156,14 +163,14 @@ $.extend(MapsLib, {
         str += "/" + dateVal.getFullYear();
         return str;
     },
-    safeNum: function(val) {
-        return (val instanceof Date) ? val.getTime() : val;
-    },
     // saves the min and max dates for sliders
     sliderMinMaxResult: function(json) {
         var minMaxHelper = function(val)
         {
             return isNaN(val) ? new Date(val) : val;
+        }
+        var safeNum = function(val) {
+            return (val instanceof Date) ? val.getTime() : val;
         }
         var numrows = json["rows"] ? json["rows"].length : 0;
         if (numrows > 0)
@@ -182,7 +189,7 @@ $.extend(MapsLib, {
                 {
                     MapsLib.columnRanges[colname].maxVal = MapsLib.typesetRangeValue(json["rows"][0][i], colname);
                 }
-                if (MapsLib.safeNum(MapsLib.columnRanges[colname].minVal) != MapsLib.safeNum(MapsLib.columnRanges[colname].maxVal))
+                if (safeNum(MapsLib.columnRanges[colname].minVal) != safeNum(MapsLib.columnRanges[colname].maxVal))
                 {
                     MapsLib.variantColumns.push(MapsLib.safeField(colname));
                 }
@@ -897,13 +904,18 @@ $.extend(MapsLib, {
                 {
                     var safename = MapsLib.safeField(cdata.column);
                     var range = MapsLib.columnRanges[cdata.column];
+                    var fmin = range.minVal;
+                    var fmax = range.maxVal;
 
-                    var fmin = (range.minVal instanceof Date) ? MapsLib.getDateString(range.minVal) : range.minVal;
+                    if ($.inArray(cdata.column, MapsLib.dateColumns) != -1)
+                    {
+                        fmin = MapsLib.getDateString(range.minVal);
+                        fmax = MapsLib.getDateString(range.maxVal);
+                    }
                     var idmin = '#sc_min_' + safename;
                     $(idmin).val(fmin);
                     $(idmin).slider('refresh');
 
-                    var fmax = (range.maxVal instanceof Date) ? MapsLib.getDateString(range.maxVal) : range.maxVal;
                     var idmax = '#sc_max_' + safename;
                     $(idmax).val(fmax);
                     $(idmax).slider('refresh');
@@ -1001,6 +1013,10 @@ $.extend(MapsLib, {
         }
 
         MapsLib.searchColumns = [];
+        if (Object.keys(MapsLib.columnRanges).length > 0)
+        {
+            MapsLib.searchPage.columns = searchFields;
+        }
         $.each(searchFields, function(i, cdata)
         {
             switch (cdata.type)
@@ -1015,7 +1031,7 @@ $.extend(MapsLib, {
                     {
                         placeholder = "Exact match (case-sensitive)";
                     }
-                    else if ($.inArray(cdata.column, MapsLib.numericalColumns) == -1 || $.inArray(cdata.column, MapsLib.dateColumns) == -1)
+                    else if (MapsLib.isStringColumn(cdata.column))
                     {
                         comparator = "CONTAINS IGNORING CASE";
                         placeholder = "Match anything containing this text";
@@ -1041,7 +1057,7 @@ $.extend(MapsLib, {
 
                 case "slider":
                 {
-                    if ($.inArray(cdata.column, MapsLib.numericalColumns) == -1 && $.inArray(cdata.column, MapsLib.dateColumns) == -1)
+                    if (MapsLib.isStringColumn(cdata.column))
                     {
                         console.log("WARNING: using slider for non-numerical, non-date column (" + cdata.column + ")!  Your searches won't work properly.")
                     }
@@ -1049,19 +1065,32 @@ $.extend(MapsLib, {
                     var range = MapsLib.columnRanges[cdata.column];
                     if (range != undefined)
                     {
-                        if (range.minVal instanceof Date)
+                        var dtype = "number";
+                        var fmin = range.minVal;
+                        var fmindate = fmin;
+                        var fmax = range.maxVal;
+                        var fmaxdate = fmax;
+                        var isDate = ($.inArray(cdata.column, MapsLib.dateColumns) != -1);
+                        var isTime = ($.inArray(cdata.column, MapsLib.timeColumns) != -1);
+                        if (isDate || isTime)
                         {
                             MapsLib.loadDatepickerFiles();
+                            if ($.inArray(cdata.column, MapsLib.timeColumns) != -1)
+                            {
+                                dtype = "time";
+                            }
+                            else
+                            {
+                                dtype = "date";
+                                fmin = MapsLib.getDateString(range.minVal);
+                                fmindate = MapsLib.getDateString(range.minVal, true);
+                                fmax = MapsLib.getDateString(range.maxVal);
+                                fmaxdate = MapsLib.getDateString(range.maxVal, true);
+                            }
                         }
-                        var fmin = (range.minVal instanceof Date) ? MapsLib.getDateString(range.minVal) : range.minVal;
-                        var fmindate = (range.minVal instanceof Date) ? MapsLib.getDateString(range.minVal, true) : fmin;
-                        var fmax = (range.maxVal instanceof Date) ? MapsLib.getDateString(range.maxVal) : range.maxVal;
-                        var fmaxdate = (range.maxVal instanceof Date) ? MapsLib.getDateString(range.maxVal, true) : fmax;
-
-                        var dtype = (range.minVal instanceof Date) ? "date" : "number";
-                        var isDisabled = (fmin == fmax);
                         if (fmin != undefined && fmax != undefined)
                         {
+                            var isDisabled = (fmin == fmax);
                             html.push('<hr><div id="sc_' + safename + '" data-role="rangeslider">');
                             html.push("<label for='sc_min_" + safename + "'>" + cdata.label + ":</label>");
                             html.push("<input type='range' data-disabled='" + isDisabled + "' data-dtype='" + dtype + "' name='sc_min_" + safename + "' id='sc_min_" + safename + "' data-ref='column' data-field='" + 
@@ -1133,6 +1162,7 @@ $.extend(MapsLib, {
     // Generates search query according to generated HTML for Search section
     doSearch: function(firstSearch) {
 
+        var whereClauses = [];
         if (firstSearch)
         {
             if (window.location.href.indexOf("#page-search") != -1)
@@ -1141,6 +1171,26 @@ $.extend(MapsLib, {
                 $("#section-search").css("visibility", "hidden");
             }
             $("#section-search").html(MapsLib.searchHtml());
+
+            $.each(MapsLib.searchPage.columns, function(i, cdata) {
+                if (cdata.min)
+                {
+                    whereClauses.push("'" + cdata.column + "' >= '" + cdata.min + "'");
+                }
+                if (cdata.max)
+                {
+                    whereClauses.push("'" + cdata.column + "' <= '" + cdata.max + "'");
+                }
+                else if (cdata.min)
+                {
+                    // HACK: Fusion Tables SQL doesn't assume midnight as a time ceiling,
+                    // so we have to make it explicit if a time floor was specified
+                    if ($.inArray(cdata.column, MapsLib.timeColumns) != -1)
+                    {
+                        whereClauses.push("'" + cdata.column + "' <= '11:59 PM'");
+                    }
+                }
+            });
         }
 
         MapsLib.clearSearch();
@@ -1149,7 +1199,6 @@ $.extend(MapsLib, {
         var address = $("#search_address").val();
         MapsLib.searchRadiusMeters = (firstSearch == true) ? 0 : $("#search_radius").val() * 1;
 
-        var whereClauses = [];
         $("input[data-ref='column']").each(function( index ) {
             var value = $(this).val();
             if (MapsLib.stringExists(value))
@@ -1161,19 +1210,51 @@ $.extend(MapsLib, {
                 {
                     // skip if range is set to full range
                     var range = MapsLib.columnRanges[name];
-                    if ($.inArray(name, MapsLib.dateColumns) != -1)
+
+                    // if settings override min/max, searches should not skip field on default
+                    var forceMinCheck = false;
+                    var forceMaxCheck = false;
+                    MapsLib.searchPage.columns
+                    $.each(MapsLib.searchPage.columns, function(i, cdata) {
+                        if (cdata.column == name)
+                        {
+                            forceMinCheck = cdata.min;
+                            forceMaxCheck = cdata.max;
+                        }
+                    });
+                    if (!forceMinCheck && !forceMaxCheck)
                     {
-                        if ((comparator == ">" || comparator == ">=") && (value == MapsLib.getDateString(range.minVal))) 
-                            return true;
-                        if ((comparator == "<" || comparator == "<=") && (value == MapsLib.getDateString(range.maxVal))) 
-                            return true;
-                    } 
-                    else
-                    {
-                        if ((comparator == ">" || comparator == ">=") && (value == range.minVal)) 
-                            return true;
-                        if ((comparator == "<" || comparator == "<=") && (value == range.maxVal)) 
-                            return true;
+                        if ($.inArray(name, MapsLib.dateColumns) != -1)
+                        {
+                            if ((comparator == "<" || comparator == "<=") && (value == MapsLib.getDateString(range.maxVal))) 
+                                return true;
+                            if ((comparator == ">" || comparator == ">=") && (value == MapsLib.getDateString(range.minVal))) 
+                                return true;
+                        }
+                        else
+                        {
+                            if ((comparator == ">" || comparator == ">=") && (value == range.minVal)) 
+                                return true;
+
+                            
+                            if ((comparator == "<" || comparator == "<=") && (value == range.maxVal))
+                            {
+                                // HACK: Fusion Tables SQL doesn't assume midnight as a time ceiling,
+                                // so we have to make it explicit if a time floor was specified
+                                if ($.inArray(name, MapsLib.timeColumns) != -1)
+                                {
+                                    var min_control = $("#sc_min_" + MapsLib.safeField(name));
+                                    if (min_control && min_control.val() == range.minVal)
+                                    {
+                                        return true;
+                                    }
+                                }
+                                else
+                                { 
+                                    return true;
+                                }
+                            }
+                        }
                     }
                     // TODO: use equals operator if min and max set to same- this requires getting both values
                 }
@@ -1546,7 +1627,14 @@ $.extend(MapsLib, {
                 break;
 
             case "DATETIME":
-                MapsLib.dateColumns.push(name);
+                if (name.toLowerCase().indexOf("time") != -1)
+                {
+                    MapsLib.timeColumns.push(name);
+                }
+                else if (name.toLowerCase().indexOf("hours") == -1)
+                {
+                    MapsLib.dateColumns.push(name);
+                }
                 break;
 
             case "LOCATION":
@@ -1596,13 +1684,32 @@ $.extend(MapsLib, {
         var columnsToCheck = (MapsLib.searchPage.allColumns) ? MapsLib.all_columns : MapsLib.searchPage.columns;
         $.each(MapsLib.columns, function(i, column)
         {
-            if ($.inArray(column, MapsLib.numericalColumns) == -1 && $.inArray(column, MapsLib.dateColumns) == -1) 
+            if (MapsLib.isStringColumn(column)) 
             {
                 MapsLib.variantColumns.push(MapsLib.safeField(column));
                 return true;
             }
             MapsLib.columnRanges[column] = {};
             var cIndex = $.inArray(column, customColumns);
+
+            if ($.inArray(column, MapsLib.timeColumns) != -1)
+            {
+                MapsLib.columnRanges[column].minVal = "12:00 AM";
+                MapsLib.columnRanges[column].maxVal = "11:59 PM";
+                if (cIndex >= 0)
+                {
+                    if (MapsLib.searchPage.columns[cIndex].min)
+                    {
+                        MapsLib.columnRanges[column].minVal = MapsLib.searchPage.columns[cIndex].min;
+                    }
+                    if (MapsLib.searchPage.columns[cIndex].max)
+                    {
+                        MapsLib.columnRanges[column].maxVal = MapsLib.searchPage.columns[cIndex].max;
+                    }
+                }
+                MapsLib.variantColumns.push(MapsLib.safeField(column));
+                return true;
+            }
             if (cIndex >= 0)
             {
                 MapsLib.columnRanges[column].minVal = MapsLib.typesetRangeValue(MapsLib.searchPage.columns[cIndex].min, column);

@@ -7338,8 +7338,8 @@ $.mobile.document.bind( "pagecreate create", function( e ) {
 
 //MOBILE-FUSION-TABLES BEGIN: support for date ranges
 // return MM/DD/YYYY if date
-valForSlider = function(val, isDate) {
-	if (isDate) {
+valFromSlider = function(val, dType) {
+	if (dType == "date") {
   		var dateVal = new Date(val);
       	var month = dateVal.getMonth()+1;
       	var day = dateVal.getDate();
@@ -7348,8 +7348,70 @@ valForSlider = function(val, isDate) {
       	str += "/" + dateVal.getFullYear();
     	return str;
 	}
+	else if (dType == "time") {
+  		var time = new Date(val);
+    	var hours = time.getUTCHours();
+    	var minutes = time.getMinutes();
+    	var minutesStr = ((minutes < 10) ? "0" : "") + minutes;
+    	if (hours == 0)
+    	{
+    		return "12:" + minutesStr + " AM";
+    	}
+    	else if (hours == 12)
+    	{
+    		return "12:" + minutesStr + " PM";
+    	}
+    	else if (hours < 12)
+    	{
+    		return "" + hours + ":" + minutesStr + " AM";
+    	}
+    	else
+    	{
+    		return "" + (hours-12) + ":" + minutesStr + " PM";
+    	}
+	}
 	return val;
 };
+
+getTimeString = function(val) {
+	var tmp = val.split(" ");
+	var isAM = (tmp[1] == "AM");
+	tmp = tmp[0].split(":");
+	var hours = tmp[0]*1;
+	var minutes = tmp[1];
+	if (isAM)
+	{
+		if (hours == 12)
+		{
+			hours = 0;
+		}
+	}
+	else
+	{
+		if (hours != 12)
+		{
+			hours += 12;
+		}
+	}
+	return "1970-01-01T" + ((hours < 10) ? "0" : "") + hours + ":" + minutes + ":00";
+};
+
+valToSlider = function(val, dType) {
+	if (dType == "date")
+	{
+		return Date.parse( val );
+	}
+	else if (dType == "time")
+	{
+		return Date.parse( getTimeString(val));
+	}
+	else
+	{
+		return parseFloat( val );
+	}
+	return 0;
+};
+
 //MOBILE-FUSION-TABLES END
 
 (function( $, undefined ) {
@@ -7383,9 +7445,9 @@ $.widget( "mobile.slider", $.mobile.widget, $.extend( {
 			labelID = $label.attr( "id" ) || controlID + "-label",
 			label = $label.attr( "id", labelID ),
 			//MOBILE-FUSION-TABLES BEGIN: support for date ranges
-			isDateType = this.isDate = control.attr("data-dtype") == "date",
-			min = !this.isToggleSwitch ? (this.isDate ? control.attr( "min" ) : parseFloat( control.attr( "min" ) )) : 0,
-			max = !this.isToggleSwitch ? (this.isDate ? control.attr( "max" ) : parseFloat( control.attr( "max" ) )) : control.find( "option" ).length-1,
+			dType = this.dType = control.attr("data-dtype"),
+			min = !this.isToggleSwitch ? (this.dType ? control.attr( "min" ) : parseFloat( control.attr( "min" ) )) : 0,
+			max = !this.isToggleSwitch ? (this.dType ? control.attr( "max" ) : parseFloat( control.attr( "max" ) )) : control.find( "option" ).length-1,
 			//MOBILE-FUSION-TABLES END
 			step = window.parseFloat( control.attr( "step" ) || 1 ),
 			miniClass = ( this.options.mini || control.jqmData( "mini" ) ) ? " ui-mini" : "",
@@ -7736,8 +7798,8 @@ $.widget( "mobile.slider", $.mobile.widget, $.extend( {
 			isInput = !this.isToggleSwitch,
 			optionElements = isInput ? [] : control.find( "option" ),
 			//MOBILE-FUSION-TABLES BEGIN: support for date ranges
-			min = isInput ? (this.isDate ? Date.parse( control.attr( "min" ) ) : parseFloat(control.attr( "min" ),10)) : 0,
-			max = isInput ? (this.isDate ? Date.parse( control.attr( "max" ) ) : parseFloat(control.attr( "max" ),10)) : optionElements.length - 1,
+			min = isInput ? valToSlider(control.attr( "min" ), this.dType) : 0,
+			max = isInput ? valToSlider(control.attr( "max" ), this.dType) : optionElements.length - 1,
 			//MOBILE-FUSION-TABLES END
 			step = ( isInput && parseFloat( control.attr( "step" ) ) > 0 ) ? parseFloat( control.attr( "step" ) ) : 1;
 
@@ -7764,7 +7826,7 @@ $.widget( "mobile.slider", $.mobile.widget, $.extend( {
 			if ( val == null ) {
 				val = isInput ? ( control.val() || 0 ) : control[0].selectedIndex;
 			}
-			percent = ( (this.isDate ? Date.parse( val ) : parseFloat( val )) - min ) / ( max - min ) * 100;
+			percent = ( valToSlider(val, this.dType) - min ) / ( max - min ) * 100;
 			//MOBILE-FUSION-TABLES END
 		}
 
@@ -7809,16 +7871,16 @@ $.widget( "mobile.slider", $.mobile.widget, $.extend( {
 			newval = max;
 		}
 
-		newval = valForSlider(newval, this.isDate);
+		newval = valFromSlider(newval, this.dType);
 
 		//MOBILE-FUSION-TABLES BEGIN: support for slider to update date picker
-		if (this.isDate)
+		if (this.dType)
 		{
 			var picker = (this.element.pickadate) ? this.element.pickadate('picker') : null;
 			if (picker)
 			{
 				this.ignoreRefresh = true;
-				picker.set('select', valForSlider(this._value(), self.isDate));
+				picker.set('select', valFromSlider(this._value(), self.dType));
 				this.ignoreRefresh = false;
 			}
 		}
@@ -8031,9 +8093,9 @@ $.mobile.document.bind( "pagecreate create", function( e ) {
 
 			var self = this,
 				//MOBILE-FUSION-TABLES BEGIN: support for date ranges
-				isDate = this.isDate = !$.isNumeric(this._inputFirst.val());
-				min = isDate ? Date.parse(this._inputFirst.val()) : parseFloat( this._inputFirst.val(), 10 ),
-				max = isDate ? Date.parse(this._inputLast.val()) : parseFloat( this._inputLast.val(), 10 ),
+				dType = this.dType = $.isNumeric(this._inputFirst.val()) ? false : (this._inputFirst.val().indexOf(":") == -1) ? "date" : "time";
+				min = valToSlider(this._inputFirst.val(), this.dType),
+				max = valToSlider(this._inputLast.val(), this.dType),
 				//MOBILE-FUSION-TABLES END
 				first = $( event.target ).hasClass( "ui-rangeslider-first" ),
 				thisSlider = first ? this._inputFirst : this._inputLast,
@@ -8049,17 +8111,17 @@ $.mobile.document.bind( "pagecreate create", function( e ) {
 			if ( min > max && !this._sliderTarget ) {
 				//this prevents min from being greater then max
 				//MOBILE-FUSION-TABLES: support for date ranges
-				thisSlider.val( valForSlider(first ? max: min, this.isDate) ).slider( "refresh" );
+				thisSlider.val( valFromSlider(first ? max: min, this.dType) ).slider( "refresh" );
 				this._trigger( "normalize" );
 			} else if ( min > max ) {
 				//this makes it so clicks on the target on either extreme go to the closest handle
 				//MOBILE-FUSION-TABLES: support for date ranges
-				thisSlider.val( valForSlider(this._targetVal, this.isDate) ).slider( "refresh" );
+				thisSlider.val( valFromSlider(this._targetVal, this.dType) ).slider( "refresh" );
 
 				//You must wait for the stack to unwind so first slider is updated before updating second
 				//MOBILE-FUSION-TABLES BEGIN: support for date ranges
 				setTimeout( (function(self) {
-					otherSlider.val( valForSlider(first ? min: max, self.isDate) ).slider( "refresh" );
+					otherSlider.val( valFromSlider(first ? min: max, self.dType) ).slider( "refresh" );
 					$.data( otherSlider.get(0), "mobileSlider" ).handle.focus();
 					self._sliderFirst.css( "z-index", first ? "" : 1 );
 					self._trigger( "normalize" );
