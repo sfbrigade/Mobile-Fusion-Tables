@@ -25,7 +25,7 @@
   <script type="text/javascript" src="source/jquery.mobile-1.3.1.modified.js"></script> <!-- this must come after jquery -->
   <script type="text/javascript" src="source/handlebars.js"></script>
   <script type="text/javascript" src="source/jquery.address.min.js"></script>
-  <script type="text/javascript" src="https://maps.google.com/maps/api/js?v=3.16.4&sensor=false&amp;libraries=places,geometry"></script>
+  <script type="text/javascript" src="https://maps.google.com/maps/api/js?v=3.16.4&amp;sensor=false&amp;libraries=places,geometry"></script>
 
   <script type="text/javascript" src="source/maps_lib.js"></script>
   <script type="text/javascript" src="fusiontable_settings.js"></script>
@@ -88,7 +88,7 @@
   <a data-role="button" id="search_page"
       data-transition="slide" href="#page-search" data-icon=
       "search" data-iconpos="right" class="ui-btn-right">Search</a>
-      <h3><span id="titlebar"></span></h3>
+      <h3><span id="titlebar">&nbsp;</span></h3>
     </div>
 
   <!-- Bounds Exceeded popup message -->
@@ -116,7 +116,7 @@
 
   <!-- List button -->
       <a data-role="button" href="#page-list" data-icon="bars" id=
-      "listview" data-transition="slideup" data-iconpos="right"
+      "list_button" data-transition="slideup" data-iconpos="right"
       class="ui-btn-right">List</a>
     </div>
   </div>
@@ -180,7 +180,7 @@
 
       $("#about").click(function() { MapsLib.onExitMap(); });
       $("#search_page").click(function() { MapsLib.onExitMap(); });
-      $("#listview").click(function(){
+      $("#list_button").click(function(){
         MapsLib.onExitMap();
         MapsLib.getListView();
       });
