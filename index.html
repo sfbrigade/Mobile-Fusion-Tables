@@ -76,13 +76,12 @@
     <div data-role="page" id="page-map">
         <div data-theme="a" data-role="header">
     <!-- About button -->
-            <a id="about" data-role="button" data-transition="slide"
-            data-direction="reverse" href=
+            <a id="about" data-role="button" href=
             "#page-about" data-icon="info" data-iconpos="left" class=
             "ui-btn-left">About</a>
     <!-- Search button -->
     <a data-role="button" id="search_page"
-            data-transition="slide" href="#page-search" data-icon=
+            href="#page-search" data-icon=
             "search" data-iconpos="right" class="ui-btn-right">Search</a>
             <h3><span id="titlebar">&nbsp;</span></h3>
         </div>
@@ -112,7 +111,7 @@
 
     <!-- List button -->
             <a data-role="button" href="#page-list" data-icon="bars" id=
-            "list_button" data-transition="slideup" data-iconpos="right"
+            "list_button" data-iconpos="right"
             class="ui-btn-right">List</a>
         </div>
     </div>
@@ -120,8 +119,8 @@
     <!-- About view -->
     <div data-role="page" id="page-about">
         <div data-theme="a" data-role="header">
-            <a data-role="button" data-transition="slide" data-icon="arrow-r" data-iconpos=
-            "right" href="#page-map" class="ui-btn-right" id="about_back">Back</a>
+            <a data-role="button" data-icon="arrow-l" data-iconpos=
+            "left" href="#page-map" class="ui-btn-left" id="about_back">Back</a>
 
             <h3>About</h3>
         </div>
@@ -133,8 +132,7 @@
     <!-- List view -->
     <div data-role="page" id="page-list">
         <div data-theme="a" data-role="header">
-            <a data-role="button" data-direction="reverse"
-            data-transition="slideup" href="index.html#page-map"
+            <a data-role="button" href="#page-map"
             data-icon="arrow-l" data-iconpos="left" class=
             "ui-btn-left" id="list_back">Back</a>
 
@@ -152,12 +150,11 @@
     <!-- Search dialog -->
     <div data-role="page" id="page-search">
         <div data-theme="a" data-role="header">
-            <a data-role="button" data-direction="reverse"
-            data-transition="slide" href="index.html#page-map"
+            <a data-role="button" href="#page-map"
             data-icon="arrow-l" data-iconpos="left" class=
             "ui-btn-left" id="search_back">Back</a>
 
-            <a data-role="button" href="index.html#page-map"
+            <a data-role="button" href="#page-map"
             data-icon="arrow-r" data-iconpos="right" class=
             "ui-btn-right" id="search_top">Search</a>
             <h3>Search</h3>
