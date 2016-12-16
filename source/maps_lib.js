@@ -86,13 +86,19 @@ $.extend(MapsLib, {
 
     loadedResources:    {},
     onEnterMap : function() {
-        MapsLib.mapState = true;
-        MapsLib.reCenterWhenReady();
-        window.location = "#page-map";
+        if (!MapsLib.mapState)
+        {
+            MapsLib.mapState = true;
+            MapsLib.reCenterWhenReady();
+            $.mobile.changePage("#page-map");
+        }
     },
     onExitMap: function() {
-        MapsLib.mapState = false;
-        MapsLib.ignoreIdle = true;
+        if (MapsLib.mapState)
+        {
+            MapsLib.mapState = false;
+            MapsLib.ignoreIdle = true;
+        }
     },
     onPopState: function() {
         var nonMaps = ["#page-search", "#page-about", "#page-list"];
@@ -686,15 +692,18 @@ $.extend(MapsLib, {
                 MapsLib.map_centroid = MapsLib.nearbyPosition;
                 if (MapsLib.localMarker != null)
                 {
-                    MapsLib.localMarker.setMap(null);
+                    MapsLib.localMarker.setMap(MapsLib.map);
                 }
-                MapsLib.localMarker = new google.maps.Marker({
-                    position: MapsLib.nearbyPosition,
-                    map: MapsLib.map,
-                    icon: MapsLib.blueDotImage,
-                    animation: google.maps.Animation.DROP,
-                    title: "You are here."
-                });
+                else
+                {
+                    MapsLib.localMarker = new google.maps.Marker({
+                        position: MapsLib.nearbyPosition,
+                        map: MapsLib.map,
+                        icon: MapsLib.blueDotImage,
+                        animation: google.maps.Animation.DROP,
+                        title: "You are here."
+                    });
+                }
                 if (MapsLib.stringExists(MapsLib.nearbyPinInfobox))
                 {
                     google.maps.event.addListener(MapsLib.localMarker, 'click', function() {
@@ -738,7 +747,7 @@ $.extend(MapsLib, {
         }
 
         // Wire up event handler for nearby button.
-        $("a#nearby").click(function(e) {
+        $("#nearby").click(function(e) {
             MapsLib.safeShow(MapsLib.addrMarker, false);
             if (MapsLib.useNearbyLocation)
             {
