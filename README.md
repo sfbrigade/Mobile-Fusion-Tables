@@ -8,11 +8,11 @@ This is an SF Brigade project for Code for America. Started by Mark Brenig-Jones
 Demos
 -----
 
-- US Health Centers: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-USHealthCenters.html
-- SF Bank Locations: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFBanks.html
-- SF Restaurant Inspections: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFInspections.html
-- SF Liquefaction Data: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-SFLiquefaction.html
-- SFCTA Projects: http://codeforsanfrancisco.org/Mobile-Fusion-Tables/demo-MyStreetSF.html
+- US Health Centers: http://www.mobilefusiontables.com/demo-USHealthCenters.html
+- SF Bank Locations: http://www.mobilefusiontables.com/demo-SFBanks.html
+- SF Restaurant Inspections: http://www.mobilefusiontables.com/demo-SFInspections.html
+- SF Liquefaction Data: http://www.mobilefusiontables.com/demo-SFLiquefaction.html
+- SFCTA Projects: http://www.mobilefusiontables.com/demo-MyStreetSF.html
 
 Here are some web apps that now use Mobile Fusion Tables:
 
@@ -22,7 +22,7 @@ Here are some web apps that now use Mobile Fusion Tables:
 
 Demo Using Your Own Fusion Table
 --------------------------------
-Go to http://codeforsanfrancisco.org/Mobile-Fusion-Tables and enter your Fusion Table URL (or ID) to see what your data will look like with Mobile Fusion Tables.
+Go to http://www.mobilefusiontables.com and enter your Fusion Table URL (or ID) to see what your data will look like with Mobile Fusion Tables.
 
 (Note that you'll be seeing it with default settings- see below for customizing it to your own needs.)
 
