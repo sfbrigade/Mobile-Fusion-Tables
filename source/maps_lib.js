@@ -197,7 +197,11 @@ $.extend(MapsLib, {
                 }
                 if (safeNum(MapsLib.columnRanges[colname].minVal) != safeNum(MapsLib.columnRanges[colname].maxVal))
                 {
-                    MapsLib.variantColumns.push(MapsLib.safeField(colname));
+                    const columnName = MapsLib.safeField(colname)
+                    if (MapsLib.variantColumns.indexOf(columnName) == -1)
+                    {
+                        MapsLib.variantColumns.push(columnName);
+                    }
                 }
             }
         }
@@ -690,11 +694,7 @@ $.extend(MapsLib, {
                 MapsLib.currentPinpoint = MapsLib.nearbyPosition;
                 MapsLib.map.setCenter(MapsLib.nearbyPosition);
                 MapsLib.map_centroid = MapsLib.nearbyPosition;
-                if (MapsLib.localMarker != null)
-                {
-                    MapsLib.localMarker.setMap(MapsLib.map);
-                }
-                else
+                if (MapsLib.localMarker == null)
                 {
                     MapsLib.localMarker = new google.maps.Marker({
                         position: MapsLib.nearbyPosition,
@@ -703,6 +703,10 @@ $.extend(MapsLib, {
                         animation: google.maps.Animation.DROP,
                         title: "You are here."
                     });
+                }
+                else if (MapsLib.localMarker.map != MapsLib.map)
+                {
+                    MapsLib.localMarker.setMap(MapsLib.map);
                 }
                 if (MapsLib.stringExists(MapsLib.nearbyPinInfobox))
                 {
