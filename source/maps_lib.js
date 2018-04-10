@@ -700,7 +700,6 @@ $.extend(MapsLib, {
                         position: MapsLib.nearbyPosition,
                         map: MapsLib.map,
                         icon: MapsLib.blueDotImage,
-                        animation: google.maps.Animation.DROP,
                         title: "You are here."
                     });
                 }
@@ -1322,7 +1321,6 @@ $.extend(MapsLib, {
                         position: MapsLib.currentPinpoint,
                         map: MapsLib.map,
                         icon: MapsLib.addrMarkerImage,
-                        animation: google.maps.Animation.DROP,
                         title: address
                     });
 
