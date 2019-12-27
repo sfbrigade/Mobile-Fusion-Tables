@@ -241,14 +241,14 @@ $.extend(MapsLib, {
 /*
     // Override the location column in your Fusion Table (useful if you have multiple columns)
     // NOTE: if you have "latitude" and "longitude" columns, just use "latitude"
-    //locationColumn:  "latitude",
+    //locationColumn:  "LOCATION",
 
     // Center and zoom radius that your map defaults to when location services are off.
     // If useDefaultMapBounds is true (see section 2), this also determines which addresses get priority with autocomplete
     defaultMapBounds: {
 
         // Use [latitude, longitude] or address
-        center: "San Francisco, CA",
+        center: [40.58, 22.85],
 
         // "X miles" or "X meters"
         radius: "6 miles"
